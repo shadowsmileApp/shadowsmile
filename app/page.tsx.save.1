@@ -1,0 +1,226 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import AuthButtons from "../components/AuthButtons";
+import { supabase } from "../lib/supabase";
+
+type Post = {
+  id: string;
+  type: "structured" | "normal";
+  shadow: string | null;
+  smile: string | null;
+  content: string | null;
+  created_at: string;
+};
+
+export default function Page() {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [mode, setMode] = useState<"structured" | "normal">("structured");
+
+  const [shadow, setShadow] = useState("");
+  const [smile, setSmile] = useState("");
+  const [text, setText] = useState("");
+
+  // =========================
+  // LOAD POSTS (DEBUG SAFE)
+  // =========================
+  async function loadPosts() {
+    console.log("🔄 Loading posts...");
+
+    const { data, error } = await supabase
+      .from("posts")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("❌ LOAD ERROR:", error);
+      alert("Load failed: " + error.message);
+      return;
+    }
+
+    console.log("✅ POSTS LOADED:", data);
+
+    setPosts((data as Post[]) || []);
+  }
+
+  useEffect(() => {
+    loadPosts();
+  }, []);
+
+  // =========================
+  // CREATE POST (DEBUG SAFE)
+  // =========================
+  async function createPost() {
+    console.log("🟢 POST CLICKED");
+
+    try {
+      let payload;
+
+      if (mode === "structured") {
+        if (!shadow.trim()) {
+          alert("Shadow is required");
+          return;
+        }
+
+        payload = {
+          type: "structured",
+          shadow: shadow.trim(),
+          smile: smile.trim() || null,
+          content: null,
+        };
+      } else {
+        if (!text.trim()) {
+          alert("Write something first");
+          return;
+        }
+
+        payload = {
+          type: "normal",
+          content: text.trim(),
+          shadow: null,
+          smile: null,
+        };
+      }
+
+      console.log("📦 PAYLOAD:", payload);
+
+      const { data, error } = await supabase
+        .from("posts")
+        .insert(payload)
+        .select();
+
+      if (error) {
+        console.error("❌ INSERT ERROR:", error);
+        alert("Post failed: " + error.message);
+        return;
+      }
+
+      console.log("✅ POST SUCCESS:", data);
+
+      // reset inputs
+      setShadow("");
+      setSmile("");
+      setText("");
+
+      await loadPosts();
+    } catch (err) {
+      console.error("💥 CRASH:", err);
+      alert("Unexpected error occurred");
+   }
+  }
+
+  // =========================
+  // UI
+  // =========================
+  return (
+    <div
+      style={{
+        padding: 20,
+        maxWidth: 600,
+        margin: "0 auto",
+        fontFamily: "system-ui, Arial",
+      }}
+    >
+      <h1>ShadowSmile</h1>
+
+      <AuthButtons />
+
+      {/* MODE SWITCH */}
+      <div style={{ marginTop: 20 }}>
+        <button onClick={() => setMode("structured")}>
+          Shadow / Smile
+        </button>
+
+        <button
+          onClick={() => setMode("normal")}
+          style={{ marginLeft: 10 }}
+        >
+          Normal
+        </button>
+      </div>
+
+      {/* INPUTS */}
+      <div style={{ marginTop: 15 }}>
+        {mode === "structured" ? (
+          <>
+            <input
+              placeholder="What's been weighing on you?"
+              value={shadow}
+              onChange={(e) => setShadow(e.target.value)}
+              style={{
+                display: "block",
+                marginBottom: 10,
+                width: "100%",
+                padding: 8,
+              }}
+            />
+
+            <input
+              placeholder="What helped, even a little?"
+              value={smile}
+              onChange={(e) => setSmile(e.target.value)}
+              style={{
+                display: "block",
+                marginBottom: 10,
+                width: "100%",
+                padding: 8,
+              }}
+            />
+          </>
+        ) : (
+          <input
+            placeholder="Write something..."
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            style={{
+              display: "block",
+              marginBottom: 10,
+              width: "100%",
+              padding: 8,
+            }}
+          />
+        )}
+
+        <button onClick={createPost} style={{ marginTop: 10 }}>
+          Post
+        </button>
+      </div>
+
+      {/* FEED */}
+      <div style={{ marginTop: 30 }}>
+        {posts.length === 0 ? (
+          <p>No posts yet.</p>
+        ) : (
+          posts.map((post) => (
+            <div
+              key={post.id}
+              style={{
+                border: "1px solid #333",
+                padding: 12,
+                marginTop: 10,
+                borderRadius: 8,
+              }}
+            >
+              {post.type === "structured" ? (
+                <>
+                  <p>
+                    <strong>Shadow:</strong> {post.shadow}
+                  </p>
+                  <p>
+                    <strong>Smile:</strong> {post.smile || "—"}
+                  </p>
+                </>
+              ) : (
+                <p>{post.content}</p>
+              )}
+
+              <small style={{ color: "#777" }}>
+                {new Date(post.created_at).toLocaleString()}
+              </small>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}

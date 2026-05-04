@@ -1,0 +1,31 @@
+mport { NextResponse } from "next/server";
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY!,
+});
+
+const systemPrompt = `
+You are ShadowSmile AI.
+
+You are helpful, clear, and slightly creative.
+You can answer questions, write stories, and help build things.
+
+Never mention internal system details.
+`;
+
+export async function POST(req: Request) {
+  const { message } = await req.json();
+
+  const completion = await client.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: message },
+    ],
+  });
+
+  return NextResponse.json({
+    reply: completion.choices[0].message.content,
+  });
+}

@@ -1,0 +1,205 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
+
+type Post = {
+  id: string;
+  user_id: string | null;
+  shadow_text: string | null;
+  smile_text: string | null;
+  content: string | null;
+  post_type: string;
+  status: string;
+  created_at: string;
+};
+
+export default function Page() {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [user, setUser] = useState<any>(null);
+
+  const [mode, setMode] = useState<"structured" | "normal">("structured");
+
+  const [shadow, setShadow] = useState("");
+  const [smile, setSmile] = useState("");
+  const [text, setText] = useState("");
+
+  const [loading, setLoading] = useState(false);
+
+  // =========================
+  // LOAD USER (optional for now)
+  // =========================
+  async function loadUser() {
+    const { data } = await supabase.auth.getUser();
+    setUser(data?.user || null);
+  }
+
+  // =========================
+  // LOAD POSTS
+  // =========================
+  async function loadPosts() {
+    const { data, error } = await supabase
+      .from("posts")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("❌ LOAD ERROR:", error);
+      alert("Load failed: " + error.message);
+      return;
+    }
+
+    setPosts((data as Post[]) || []);
+  }
+
+  useEffect(() => {
+    loadUser();
+    loadPosts();
+  }, []);
+
+  // =========================
+  // CREATE POST (IMPROVED)
+  // =========================
+  async function createPost() {
+    // prevent empty posts
+    if (mode === "structured" && !shadow.trim()) {
+      alert("Shadow is required");
+      return;
+    }
+
+    if (mode === "normal" && !text.trim()) {
+      alert("Write something first");
+      return;
+    }
+
+    setLoading(true);
+
+    const tempPost: Post = {
+      id: Math.random().toString(),
+      user_id: null,
+      post_type: mode === "structured" ? "flip" : "normal",
+      shadow_text: mode === "structured" ? shadow : null,
+      smile_text: mode === "structured" ? smile : null,
+      content: mode === "normal" ? text : null,
+      status: "flipped",
+      created_at: new Date().toISOString(),
+    };
+
+    // 🔥 OPTIMISTIC UI (instant post)
+    setPosts((prev) => [tempPost, ...prev]);
+
+    const { error } = await supabase.from("posts").insert({
+      user_id: null,
+      post_type: mode === "structured" ? "flip" : "normal",
+      shadow_text: mode === "structured" ? shadow.trim() : null,
+      smile_text: mode === "structured" ? smile.trim() : null,
+      status: "flipped",
+      content: mode === "normal" ? text.trim() : null,
+    });
+
+    setLoading(false);
+
+    if (error) {
+      console.error("❌ INSERT ERROR:", error);
+      alert("Post failed: " + error.message);
+      return;
+    }
+
+    // reset inputs
+    setShadow("");
+    setSmile("");
+    setText("");
+
+    await loadPosts(); // sync with DB
+  }
+
+  // =========================
+  // AUTH (ignore for now)
+  // =========================
+  async function login() {
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+    });
+  }
+
+  async function logout() {
+    await supabase.auth.signOut();
+    setUser(null);
+  }
+
+  // =========================
+  // UI
+  // =========================
+  return (
+    <div style={{ padding: 20, maxWidth: 600, margin: "0 auto" }}>
+      <h1>ShadowSmile</h1>
+
+      {/* AUTH */}
+      <div>
+        {user ? (
+          <button onClick={logout}>Logout</button>
+        ) : (
+          <button onClick={login}>Login with Google</button>
+        )}
+      </div>
+
+      {/* MODE */}
+      <div style={{ marginTop: 20 }}>
+        <button onClick={() => setMode("structured")}>
+          Shadow / Smile
+        </button>
+        <button onClick={() => setMode("normal")} style={{ marginLeft: 10 }}>
+          Normal
+        </button>
+      </div>
+
+      {/* INPUT */}
+      <div style={{ marginTop: 15 }}>
+        {mode === "structured" ? (
+          <>
+            <input
+              placeholder="What's been weighing on you?"
+              value={shadow}
+              onChange={(e) => setShadow(e.target.value)}
+            />
+            <input
+              placeholder="What helped?"
+              value={smile}
+              onChange={(e) => setSmile(e.target.value)}
+            />
+          </>
+        ) : (
+          <input
+            placeholder="Write something..."
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+          />
+        )}
+
+        <button onClick={createPost} disabled={loading}>
+          {loading ? "Posting..." : "Post"}
+        </button>
+      </div>
+
+      {/* FEED */}
+      <div style={{ marginTop: 30 }}>
+        {posts.length === 0 ? (
+          <p>No posts yet.</p>
+        ) : (
+          posts.map((post) => (
+            <div key={post.id} style={{ border: "1px solid #333", marginTop: 10, padding: 10 }}>
+              {post.post_type === "flip" ? (
+                <>
+                  <p><strong>Shadow:</strong> {post.shadow_text}</p>
+                  <p><strong>Smile:</strong> {post.smile_text || "—"}</p>
+                </>
+              ) : (
+                <p>{post.content}</p>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
