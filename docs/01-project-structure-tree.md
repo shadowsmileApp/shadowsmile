@@ -1,262 +1,756 @@
-# Shadowssmile - Project Structure (Tree View - Primary Architecture Map)
+# ShadowSmile — Project Structure Tree v2
+## Reality-Based Architecture Map
 
-This file contains the main architecture map of the project.
-
-Source command:
-tree -a -I "node_modules|.next|dist|build"
+**Project:** ShadowSmile  
+**Architecture Version:** Functional Alpha  
+**Last Updated:** May 2026
 
 ---
 
-.
-├── app
-│   ├── api
-│   │   ├── auth
-│   │   └── chat
-│   │       ├── route.ts
-│   │       └── route.ts.save
-│   ├── create
-│   │   └── page.tsx
-│   ├── dev
-│   │   └── page.tsx
-│   ├── globals.css
-│   ├── layout.tsx
-│   ├── page.tsx
-│   ├── page.tsx.save
-│   ├── page.tsx.save.1
-│   ├── page.tsx.save.2
-│   ├── post
-│   │   └── [id]
-│   │       └── page.tsx
-│   ├── profile
-│   │   └── [id]
-│   │       └── page.tsx
-│   ├── providers.tsx
-│   └── signin
-│       ├── page.tsx
-│       └── postcss.config.mjs
-├── components
-│   ├── AuthButtons.tsx
-│   └── Navbar.tsx
-├── crash.log
-├── .env.example
-├── .env.local
-├── .env.local.save
-├── .git
-│   ├── branches
-│   ├── COMMIT_EDITMSG
-│   ├── config
-│   ├── description
-│   ├── HEAD
-│   ├── hooks
-│   │   ├── applypatch-msg.sample
-│   │   ├── commit-msg.sample
-│   │   ├── fsmonitor-watchman.sample
-│   │   ├── post-update.sample
-│   │   ├── pre-applypatch.sample
-│   │   ├── pre-commit.sample
-│   │   ├── pre-merge-commit.sample
-│   │   ├── prepare-commit-msg.sample
-│   │   ├── pre-push.sample
-│   │   ├── pre-rebase.sample
-│   │   ├── pre-receive.sample
-│   │   ├── push-to-checkout.sample
-│   │   └── update.sample
-│   ├── index
-│   ├── info
-│   │   └── exclude
-│   ├── logs
-│   │   ├── HEAD
-│   │   └── refs
-│   │       ├── heads
-│   │       │   └── main
-│   │       └── remotes
-│   │           └── origin
-│   │               └── main
-│   ├── objects
-│   │   ├── 0c
-│   │   │   └── 1f368705ec1e553f5157048d9642c00a29d617
-│   │   ├── 19
-│   │   │   └── 627db22822602389b3fff0413a7d49ad2d43db
-│   │   ├── 1b
-│   │   │   └── 94d0a21d27ebc863a25a9373204630632f0046
-│   │   ├── 22
-│   │   │   └── d52d330078e02e0fe2ce4f22071a32a4cf7d07
-│   │   ├── 26
-│   │   │   └── a2c483e91f904972ae2f0f85ac34509c354950
-│   │   ├── 27
-│   │   │   └── ad840feb2748e4e4eba037b11e4c69003bc906
-│   │   ├── 28
-│   │   │   └── ad1dc6c582e39a26a6b667e01850dae132757b
-│   │   ├── 29
-│   │   │   └── c5940915293a7a5b5f75f5218bf670cba4a8cb
-│   │   ├── 30
-│   │   │   └── adbf5230523bc0b1d95933171fb30362c90238
-│   │   ├── 32
-│   │   │   ├── 2806b7743d3ae4cb42fe11704cd20d53fbf552
-│   │   │   └── dca16dad9a2612da529aa6ada0ab7536bb4dcd
-│   │   ├── 34
-│   │   │   └── c160212baa199197183302cd20e1df944966dc
-│   │   ├── 35
-│   │   │   └── ceb62d426195c5f86f9aa0042b7d990cf0183d
-│   │   ├── 38
-│   │   │   └── 06ec9a6bbd5d58ca958444b8c842d736c10cdc
-│   │   ├── 3a
-│   │   │   └── e60daf7d35a5f981f6ec30a74c037408618961
-│   │   ├── 41
-│   │   │   └── a6f86aefa87b942f56442f5450301281ee85e8
-│   │   ├── 43
-│   │   │   └── f92f8f92d7c90cf5c6157fc949e8855e8fdbdd
-│   │   ├── 44
-│   │   │   └── 7fe00e6c0e5d99d7f8d3530df774feeed839dd
-│   │   ├── 50
-│   │   │   ├── 5ec117ca43b0054037b7d1a77150e153980ff6
-│   │   │   └── 6eba32709af05bf17da1020f049f764b745cde
-│   │   ├── 57
-│   │   │   └── 871b9c57e9f46a580c0f58eecbceb2f25af4d4
-│   │   ├── 59
-│   │   │   └── 20a7bd0361d6d3d4eab7d5f53152aa647ead25
-│   │   ├── 5d
-│   │   │   └── 4e1db2acd4cbb4d1e61d1ead946733b15de9ce
-│   │   ├── 5e
-│   │   │   └── 2e685100e7feb0b6f0619b49e9bd09caad52da
-│   │   ├── 5f
-│   │   │   └── c6b55a9abe8b7d3e4b144ba27ef7d8b40d1735
-│   │   ├── 61
-│   │   │   └── e36849cf7cfa9f1f71b4a3964a4953e3e243d3
-│   │   ├── 65
-│   │   │   └── 88023097baedf642cd4936d04564e2bc204421
-│   │   ├── 66
-│   │   │   └── 8e62d4ec8cb84553d81f3a841156b1a55d28d4
-│   │   ├── 73
-│   │   │   └── a534649246ba1ba6a753a8f5b994448fdf3d0c
-│   │   ├── 74
-│   │   │   ├── 7317e2a7e52092999675438c0d90db0895370e
-│   │   │   └── c550615bd30f3ccfd879428a9907e2b10b8878
-│   │   ├── 75
-│   │   │   └── 8d740d2b9b84aaad80eb5f8128c4ae2305ef94
-│   │   ├── 7d
-│   │   │   ├── 4b9e116162c7b2b0ed1ddc76bcf4036bd39c64
-│   │   │   └── b8bdc30c15bcdb9e13e1e287688add766a7db0
-│   │   ├── 7e
-│   │   │   ├── 278b132ad7e2187f88ee33000a1b992e633da0
-│   │   │   └── baf3094871a7b217f29bc63fd8f67d30027847
-│   │   ├── 83
-│   │   │   ├── 257d8bb21d9333113354e095ddffe040d5a2bd
-│   │   │   └── 75ef5c8a8fe51eebf217f7033985f522233906
-│   │   ├── 95
-│   │   │   └── 37c618c33a46b56912f4559f8bd66d8830d589
-│   │   ├── 98
-│   │   │   └── 1804c2b37ac1d86cef70da6af73caca514d5ac
-│   │   ├── 9a
-│   │   │   └── 52f450988aead6dc5dfd8b26344122cf30f587
-│   │   ├── 9e
-│   │   │   ├── 849a7e5281049e07054599649f229c4992e50e
-│   │   │   └── dff1c7cacb3bfac9a1eadcf6f51eaa99565e38
-│   │   ├── a1
-│   │   │   └── b36a32ad6e8ac9e4c11d43473ab73dcd55ecf5
-│   │   ├── a4
-│   │   │   ├── 54699fe5b2bcaec2974bbf17a16092a1899f0a
-│   │   │   └── dfa8be05375a53fd1e3efbcb546d5654a512ea
-│   │   ├── a7
-│   │   │   └── 2f8e19d14049edacc864070de92ae30bbf905e
-│   │   ├── ae
-│   │   │   └── 5fa4a1bf1904d3913f68b5ea236a5f24061ed2
-│   │   ├── af
-│   │   │   └── 14119f02257c397e87ad603727695d7132db33
-│   │   ├── b4
-│   │   │   ├── 4d128c4656612051c89ddbbe58c5604c86dc81
-│   │   │   ├── 748b29ed141ceb75249de2273a09365ecbfb20
-│   │   │   └── 9bddc6863da7bcb3b5301774bd2848077ebf43
-│   │   ├── bc
-│   │   │   └── 05ce60d5ccdab9ee243104da89accffaed06d8
-│   │   ├── c1
-│   │   │   └── f1621c03e3e69c9f7c0d9ef57a197ea2c455d1
-│   │   ├── c4
-│   │   │   └── b7818fbb2c2c34c24feb1b627ee824507c5600
-│   │   ├── d5
-│   │   │   ├── 955d58318b593570a180620a39a54f0c694179
-│   │   │   └── c89d411c93f6f9af3abef3b9bc320f05e24727
-│   │   ├── d6
-│   │   │   └── 99c3dfa545346723547b2e527385787a2e4655
-│   │   ├── d7
-│   │   │   └── 62962df31a321f9c96db1d079f7e1c23833c0c
-│   │   ├── d9
-│   │   │   ├── 4dd2686e0400ce590328262a0d0d1e0cae9f02
-│   │   │   └── b3c4742c8c6dbadcc3ead759722e110ef47f91
-│   │   ├── de
-│   │   │   └── 89c2e07e2674431675635a3cf6cc7ee0d56ca2
-│   │   ├── e6
-│   │   │   └── 9de29bb2d1d6434b8b29ae775ad8c2e48c5391
-│   │   ├── ea
-│   │   │   └── 8091f16d870280579cdd11fb2d4f08caf3c629
-│   │   ├── eb
-│   │   │   └── 16d1bca31d8e90835b4e6ea5c2153437bc2d7a
-│   │   ├── ef
-│   │   │   ├── 9194228e8b4779c8c27b7b518bee6b8341f9b4
-│   │   │   └── ab1920c3fca0a00828983477c82ed379c05ea2
-│   │   ├── f0
-│   │   │   └── ac6be68f3541be8a2eed6d86df524a69f02ca5
-│   │   ├── f1
-│   │   │   └── d8c73cdcf9eaacb01fec99963ad78d591305ae
-│   │   ├── f4
-│   │   │   └── 6f4bae581197d02c7129e2368185865003fbe6
-│   │   ├── f6
-│   │   │   └── bf70ca0d138630f091086a3b826449c0917ae0
-│   │   ├── f7
-│   │   │   └── 0da992043f8a564d0e5808ecc4f071b469e9c5
-│   │   ├── fc
-│   │   │   ├── 112e8b8b8116fd348e9f3da39ee809c9890e57
-│   │   │   └── cd59b2812e6dcdd14f8cd11eeb76b2ddfd3f4d
-│   │   ├── fe
-│   │   │   └── 433506039102171da0f27e1258d3733a6f1a4b
-│   │   ├── ff
-│   │   │   └── dbebc037c27339b355c7620a02c0b72a961984
-│   │   ├── info
-│   │   └── pack
-│   ├── ORIG_HEAD
-│   └── refs
-│       ├── heads
-│       │   └── main
-│       ├── remotes
-│       │   └── origin
-│       │       └── main
-│       └── tags
-├── .gitignore
-├── .husky
-│   └── _
-│       ├── applypatch-msg
-│       ├── commit-msg
-│       ├── .gitignore
-│       ├── h
-│       ├── husky.sh
-│       ├── post-applypatch
-│       ├── post-checkout
-│       ├── post-commit
-│       ├── post-merge
-│       ├── post-rewrite
-│       ├── pre-applypatch
-│       ├── pre-auto-gc
-│       ├── pre-commit
-│       ├── pre-merge-commit
-│       ├── prepare-commit-msg
-│       ├── pre-push
-│       └── pre-rebase
-├── lib
-│   ├── supabase-server.ts
-│   └── supabase.ts
-├── next.config.js
-├── next-env.d.ts
+# 1. HIGH-LEVEL ARCHITECTURE
+
+ShadowSmile is currently built using:
+
+## Frontend
+- Next.js (App Router)
+- React
+- TypeScript
+
+## Backend
+- Supabase
+
+## Deployment
+- Vercel
+
+## Tooling
+- Husky Git Hooks
+
+---
+
+## Current Development Stage
+
+ShadowSmile is currently in:
+
+# Functional Alpha
+
+Meaning:
+
+Core systems exist and are implemented.
+
+However:
+
+Many systems are still:
+
+> implemented but not fully verified.
+
+The project has moved beyond prototype stage and is now entering:
+
+- verification
+- hardening
+- UX refinement
+- privacy validation
+- reliability work
+
+---
+
+# 2. VERIFIED PROJECT STRUCTURE
+
+Current verified structure:
+
+```txt
+shadowsmile/
+├── app/
+├── backup/
+├── components/
+├── docs/
+├── lib/
+├── public/
+├── temp/
 ├── package.json
 ├── package-lock.json
-├── postcss.config.mjs
-├── public
-│   └── Shadowsmile.png
-├── .secretlintrc.json
-├── set-admin.js
 ├── tsconfig.json
-└── .vercel
-    ├── project.json
-    └── README.txt
+├── next.config.js
+├── postcss.config.mjs
+├── README.md
+├── signup-locations.txt
+├── crash.log
+└── .vercel/
+```
 
-97 directories, 153 files
+This structure is currently clean for an early-stage social platform.
 
+---
+
+# 3. APP DIRECTORY ARCHITECTURE
+
+## app/
+
+Primary application directory.
+
+Uses:
+
+> Next.js App Router
+
+Current verified structure:
+
+```txt
+app/
+├── api/
+│   └── chat/
+│       └── route.ts
+│
+├── components/
+│   ├── BottomNav.tsx
+│   └── LayoutShell.tsx
+│
+├── create/
+│   └── page.tsx
+│
+├── dev/
+│   └── page.tsx
+│
+├── messages/
+│   └── page.tsx
+│
+├── post/
+│   └── [id]/
+│       └── page.tsx
+│
+├── profile/
+│   └── [id]/
+│       └── page.tsx
+│
+├── reset-password/
+│   └── page.tsx
+│
+├── search/
+│   └── page.tsx
+│
+├── signin/
+│   └── page.tsx
+│
+├── globals.css
+├── layout.tsx
+├── page.tsx
+└── providers.tsx
+```
+
+---
+
+# 4. VERIFIED ROUTE MAP
+
+## Home Feed
+
+```txt
+/
+```
+
+File:
+
+```txt
+app/page.tsx
+```
+
+Purpose:
+
+Primary feed experience.
+
+Expected responsibility:
+
+- content display
+- user interaction
+- social engagement
+
+Status:
+
+> implemented, partially verified
+
+---
+
+## Authentication
+
+### Sign In
+
+```txt
+/signin
+```
+
+File:
+
+```txt
+app/signin/page.tsx
+```
+
+Status:
+
+> implemented, partially verified
+
+---
+
+### Reset Password
+
+```txt
+/reset-password
+```
+
+File:
+
+```txt
+app/reset-password/page.tsx
+```
+
+Status:
+
+> implemented, insufficiently verified
+
+---
+
+## Content Creation
+
+### Create Post
+
+```txt
+/create
+```
+
+File:
+
+```txt
+app/create/page.tsx
+```
+
+Purpose:
+
+User post creation.
+
+Verified DB support:
+
+- content
+- shadow_text
+- smile_text
+- image_url
+- post_type
+
+Status:
+
+> implemented, partially verified
+
+---
+
+## Post System
+
+### Dynamic Post Page
+
+```txt
+/post/[id]
+```
+
+File:
+
+```txt
+app/post/[id]/page.tsx
+```
+
+Purpose:
+
+Single post viewing and interaction.
+
+Expected responsibilities:
+
+- post rendering
+- comments
+- reactions
+- permissions
+
+Status:
+
+> implemented, partially verified
+
+---
+
+## Profile System
+
+### Dynamic Profile Page
+
+```txt
+/profile/[id]
+```
+
+File:
+
+```txt
+app/profile/[id]/page.tsx
+```
+
+Purpose:
+
+User identity layer.
+
+Expected responsibilities:
+
+- profile display
+- posts
+- followers
+- private account logic
+- profile permissions
+
+Status:
+
+> implemented, partially verified
+
+---
+
+## Discovery
+
+### Search
+
+```txt
+/search
+```
+
+File:
+
+```txt
+app/search/page.tsx
+```
+
+Purpose:
+
+User/content discovery.
+
+Status:
+
+> implemented, insufficiently verified
+
+---
+
+## Messaging
+
+### Messages
+
+```txt
+/messages
+```
+
+File:
+
+```txt
+app/messages/page.tsx
+```
+
+Purpose:
+
+Messaging experience.
+
+Status:
+
+> implemented, insufficiently verified
+
+End-to-end reliability not yet confirmed.
+
+---
+
+## Development / Testing
+
+### Dev Route
+
+```txt
+/dev
+```
+
+File:
+
+```txt
+app/dev/page.tsx
+```
+
+Purpose:
+
+Developer testing and experimentation.
+
+Status:
+
+> internal development utility
+
+---
+
+## API
+
+### Chat Route
+
+```txt
+/api/chat
+```
+
+File:
+
+```txt
+app/api/chat/route.ts
+```
+
+Purpose:
+
+Backend chat logic.
+
+Status:
+
+> exists, requires runtime verification
+
+---
+
+# 5. COMPONENT ARCHITECTURE
+
+## app/components/
+
+### BottomNav.tsx
+
+Purpose:
+
+Primary navigation system.
+
+Expected responsibilities:
+
+- mobile navigation
+- fast route access
+- platform flow consistency
+
+Importance:
+
+High.
+
+Navigation consistency strongly affects UX quality.
+
+---
+
+### LayoutShell.tsx
+
+Purpose:
+
+Global application shell.
+
+Expected responsibilities:
+
+- consistent layout
+- route wrapping
+- shared structure
+
+Importance:
+
+High.
+
+Central architectural component.
+
+---
+
+## components/
+
+### Navbar.tsx
+
+Purpose:
+
+Shared navigation component.
+
+Current role should remain clear to avoid duplication with BottomNav.
+
+Future AIs should watch for:
+
+> navigation overlap and inconsistent UX.
+
+---
+
+# 6. SUPABASE ARCHITECTURE
+
+## lib/
+
+Current verified structure:
+
+```txt
+lib/
+├── supabase.ts
+└── supabase-server.ts
+```
+
+---
+
+### supabase.ts
+
+Purpose:
+
+Client-side Supabase usage.
+
+Likely responsibilities:
+
+- authenticated client access
+- frontend interactions
+- user session handling
+
+---
+
+### supabase-server.ts
+
+Purpose:
+
+Server-side Supabase logic.
+
+Importance:
+
+Critical for:
+
+- auth
+- protected logic
+- secure server operations
+
+Future development should preserve:
+
+> server/client separation discipline.
+
+Avoid mixing responsibilities carelessly.
+
+---
+
+# 7. VERIFIED DATABASE RELATIONSHIPS
+
+Current verified public tables:
+
+```txt
+profiles
+posts
+comments
+followers
+reactions
+```
+
+---
+
+## profiles
+
+Stores:
+
+- identity
+- handle
+- display name
+- avatar
+- bio
+- privacy state
+- role system
+
+Important verified column:
+
+```txt
+is_private
+```
+
+Private account integrity is high priority.
+
+---
+
+## posts
+
+Stores:
+
+- content
+- emotional dual posting
+- images
+- post state
+
+Verified differentiation:
+
+```txt
+shadow_text
+smile_text
+post_type
+```
+
+ShadowSmile identity already exists at DB level.
+
+---
+
+## comments
+
+Purpose:
+
+discussion and engagement layer.
+
+---
+
+## followers
+
+Purpose:
+
+social graph.
+
+Handles:
+
+- following
+- followers
+- privacy relationships
+
+---
+
+## reactions
+
+Purpose:
+
+engagement system.
+
+---
+
+# 8. DOCUMENTATION SYSTEM
+
+## docs/
+
+Current verified structure:
+
+```txt
+docs/
+├── 00-shadow-smile-master-audit.md
+├── 01-project-structure-tree.md
+├── 02-file-inventory-find.md
+├── 03-directory-dump-ls.md
+└── backups/
+```
+
+Purpose:
+
+> persistent project memory.
+
+Future AIs should consult docs before making assumptions.
+
+---
+
+## docs/backups/
+
+Current backup strategy exists.
+
+Examples:
+
+- route backups
+- page backups
+- auth-flow backups
+- component backups
+
+This is good practice for risky changes.
+
+However:
+
+Future cleanup may be needed to avoid backup sprawl.
+
+---
+
+# 9. TEMPORARY UTILITIES
+
+## temp/
+
+Current verified script:
+
+```txt
+temp/set-admin.js
+```
+
+Purpose:
+
+temporary utility tooling.
+
+Rule:
+
+temporary scripts should eventually become:
+
+- documented
+or
+- removed
+
+Avoid hidden dependencies.
+
+---
+
+# 10. ARCHITECTURAL STRENGTHS
+
+Current strengths:
+
+### Clean early-stage structure
+Good separation.
+
+---
+
+### App Router organization
+Modern routing approach.
+
+---
+
+### Supabase separation
+Client/server split exists.
+
+---
+
+### Social graph foundation exists
+Followers, profiles, reactions, comments.
+
+---
+
+### Product differentiation exists
+Shadow + Smile structure already built into database.
+
+This is significant.
+
+---
+
+### Private account groundwork exists
+Trust system foundation already present.
+
+---
+
+# 11. CURRENT TECHNICAL DEBT OBSERVATIONS
+
+Known risks:
+
+### Unverified systems
+Messaging, search, reset-password, edge cases.
+
+---
+
+### Private-account complexity
+Permissions will become increasingly important.
+
+---
+
+### Navigation overlap risk
+BottomNav + Navbar may eventually create UX inconsistency.
+
+---
+
+### Backup accumulation
+May eventually need cleanup system.
+
+---
+
+### Route growth risk
+As features expand:
+
+avoid giant page files.
+
+Prefer modularization.
+
+---
+
+# 12. AI ORIENTATION NOTES
+
+Before helping ShadowSmile:
+
+Future AIs should:
+
+1. Read the master audit
+2. Understand route architecture
+3. Verify database reality
+4. Respect ShadowSmile identity
+5. Avoid hallucinating missing systems
+6. Treat implemented systems as partially verified unless proven otherwise
+
+Current maturity:
+
+> Functional Alpha social platform.
+
+Not beginner stage.
+
+Advice should match project maturity.
+
+---

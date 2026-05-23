@@ -3,11 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  Home,
-  Search,
-  Plus,
   MessageSquare,
-  User,
   ShieldAlert,
   Command,
   Heart,
@@ -18,30 +14,54 @@ import {
 } from "lucide-react";
 
 import { supabase } from "../lib/supabase";
+import { User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
-import BottomNav from "./components/BottomNav";
 
 /* ================= TYPES ================= */
 
 type Post = {
   id: string;
+
+  // Internal creator link
   user_id: string | null;
+
+  // ShadowSmile privacy
+  is_anonymous?: boolean | null;
+
   shadow_text: string | null;
   smile_text: string | null;
   content: string | null;
+
   post_type: string;
   created_at: string;
+
   like_count?: number;
+
+  profiles?: {
+    handle?: string | null;
+    is_private?: boolean | null;
+  } | null;
 };
+
+/* ================= CONSTANTS ================= */
+
+const DEV_ROLES = [
+  "admin",
+  "founder",
+  "developer",
+];
 
 /* ================= COMPONENT ================= */
 
 export default function Page() {
   const router = useRouter();
 
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+
+const [role, setRole] =
+  useState("");
 
   const [mode, setMode] = useState<"structured" | "normal">("structured");
 
@@ -50,24 +70,46 @@ export default function Page() {
   const [text, setText] = useState("");
 
   const [openComments, setOpenComments] = useState<string | null>(null);
-  const [commentText, setCommentText] = useState("");
+  const [commentTexts, setCommentTexts] = useState<Record<string, string>>({});
+
+  const [isAnonymous, setIsAnonymous] =
+    useState(false);
 
   /* ================= USER ================= */
 
   async function loadUser() {
-      try {
-    setLoading(true);
+  try {
 
     const {
       data: { session },
     } = await supabase.auth.getSession();
 
-    const currentUser = session?.user ?? null;
+    const currentUser =
+      session?.user ?? null;
 
     setUser(currentUser);
-  } catch (err) {
-    console.error("Failed loading user:", err);
-    setUser(null);
+
+    if (currentUser?.id) {
+      const {
+        data: profile,
+      } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq(
+          "id",
+          currentUser.id
+        )
+        .maybeSingle();
+
+      setRole(
+        profile?.role || ""
+      );
+    } else {
+      setRole("");
+    }
+
+  } catch (error) {
+    console.error(error);
   } finally {
     setLoading(false);
   }
@@ -76,13 +118,24 @@ export default function Page() {
   /* ================= POSTS ================= */
 
   async function loadPosts() {
-    const { data: postsData, error: postError } = await supabase
-      .from("posts")
-      .select("*")
-      .order("created_at", { ascending: false });
+    const {
+  data: postsData,
+  error: postError,
+} = await supabase
+  .from("posts")
+  .select(`
+  *,
+  profiles(handle, is_private)
+`)
+  .order("created_at", {
+    ascending: false,
+  });
 
     if (postError) {
-      console.error("Post error:", postError);
+      console.error(
+        "Post error:",
+        postError
+      );
       return;
     }
 
@@ -90,7 +143,7 @@ export default function Page() {
       .from("reactions")
       .select("post_id, type");
 
-    const formatted = (postsData || []).map((post: any) => {
+    const formatted = (postsData || []).map((post: Post) => {
       const likes =
         reactionsData?.filter(
           (r) => r.post_id === post.id && r.type === "like"
@@ -110,28 +163,18 @@ export default function Page() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    }
-  );
+    } = supabase.auth.onAuthStateChange(() => {
+      loadUser();
+    });
 
-  return () => subscription.unsubscribe();
-}, []);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
-    if (user) {
-      loadPosts();
-    } else {
-      setPosts([]);
-    }
-  }, [user]);
-
-useEffect(() => {
-  if (!loading && !user) {
-    router.replace("/signin");
-  }
-}, [loading, user, router]);
+  loadPosts();
+}, [user]);
 
   /* ================= CREATE POST ================= */
 
@@ -142,21 +185,27 @@ useEffect(() => {
     }
 
     const payload =
-      mode === "structured"
-        ? {
-            user_id: user.id,
-            post_type: "flip",
-            shadow_text: shadow,
-            smile_text: smile,
-            content: null,
-          }
-        : {
-            user_id: user.id,
-            post_type: "normal",
-            content: text,
-            shadow_text: null,
-            smile_text: null,
-          };
+  mode === "structured"
+    ? {
+        user_id: user.id,
+        post_type: "flip",
+        shadow_text: shadow,
+        smile_text: smile,
+        content: null,
+
+        // ShadowSmile privacy
+        is_anonymous: isAnonymous,
+      }
+    : {
+        user_id: user.id,
+        post_type: "normal",
+        content: text,
+        shadow_text: null,
+        smile_text: null,
+
+        // ShadowSmile privacy
+        is_anonymous: isAnonymous,
+      };
 
     const { error } = await supabase.from("posts").insert(payload);
 
@@ -168,6 +217,7 @@ useEffect(() => {
     setShadow("");
     setSmile("");
     setText("");
+    setIsAnonymous(false);
 
     loadPosts();
   }
@@ -175,19 +225,37 @@ useEffect(() => {
   /* ================= LIKE ================= */
 
   async function likePost(postId: string) {
-    if (!user) {
-      router.push("/signin");
-      return;
-    }
-
-    await supabase.from("reactions").insert({
-      post_id: postId,
-      user_id: user.id,
-      type: "like",
-    });
-
-    loadPosts();
+  if (!user) {
+    router.push("/signin");
+    return;
   }
+
+  const { data: existingLike } =
+    await supabase
+      .from("reactions")
+      .select("id")
+      .eq("post_id", postId)
+      .eq("user_id", user.id)
+      .eq("type", "like")
+      .maybeSingle();
+
+  if (existingLike) {
+    await supabase
+      .from("reactions")
+      .delete()
+      .eq("id", existingLike.id);
+  } else {
+    await supabase
+      .from("reactions")
+      .insert({
+        post_id: postId,
+        user_id: user.id,
+        type: "like",
+      });
+  }
+
+  loadPosts();
+}
 
   /* ================= COMMENT ================= */
 
@@ -216,7 +284,7 @@ useEffect(() => {
 
     try {
       await navigator.clipboard.writeText(link);
-      alert("Link copied to clipboard");
+      console.log("Link copied");
     } catch {
       prompt("Copy this link:", link);
     }
@@ -282,12 +350,14 @@ useEffect(() => {
             Marketplace
           </button>
 
-          <button
-            style={styles.market}
-            onClick={() => router.push("/dev")}
-          >
-            Dev
-          </button>
+{DEV_ROLES.includes(role) && (
+    <button
+      style={styles.market}
+      onClick={() => router.push("/dev")}
+    >
+      Dev
+    </button>
+  )}
 
           <button style={styles.shield}>
             <ShieldAlert size={18} />
@@ -327,7 +397,17 @@ useEffect(() => {
             style={{
               ...styles.toggleBtn,
               background:
-                mode === "structured" ? "#7B2FFF" : "transparent",
+                mode === "structured"
+                  ? "linear-gradient(135deg,#7B2FFF,#8F3FFF)"
+                  : "transparent",
+              border:
+                mode === "structured"
+                  ? "1px solid #7B2FFF"
+                  : "1px solid #333",
+              boxShadow:
+                mode === "structured"
+                  ? "0 0 20px rgba(123,47,255,.35)"
+                  : "none",
             }}
           >
             Shadow / Smile
@@ -338,11 +418,14 @@ useEffect(() => {
             style={{
               ...styles.toggleBtn,
               background:
-                mode === "normal" ? "#39FF88" : "transparent",
-              color:
                 mode === "normal"
-                  ? "#0A0A0F"
-                  : "#EAEAF0",
+                  ? "#141414"
+                  : "transparent",
+              border:
+                mode === "normal"
+                  ? "1px solid #444"
+                  : "1px solid #333",
+              color: "#EAEAF0",
             }}
           >
             Normal
@@ -378,6 +461,32 @@ useEffect(() => {
             />
           )}
 
+          <div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 14,
+  }}
+>
+  <input
+    type="checkbox"
+    checked={isAnonymous}
+    onChange={(e) =>
+      setIsAnonymous(e.target.checked)
+    }
+  />
+
+  <span
+    style={{
+      color: "#aaa",
+      fontSize: 14,
+    }}
+  >
+    Post anonymously
+  </span>
+</div>
+
           <button onClick={createPost} style={styles.postBtn}>
             Post
           </button>
@@ -386,34 +495,30 @@ useEffect(() => {
 
       {/* FEED */}
       <section style={styles.feed}>
-        {!user ? (
-          <div style={styles.lockedBox}>
-            <h2>Members Only</h2>
-            <p>Sign in to view Shadows and Smiles.</p>
-
-            <button
-              style={styles.enterBtn}
-              onClick={() => router.push("/signin")}
+        {posts.map((p) => (
+          <div
+            key={p.id}
+            style={styles.card}
+            onClick={() => router.push(`/post/${p.id}`)}
+          >
+         {!p.is_anonymous &&
+           p.user_id && (
+             <Link
+               href={`/profile/${p.user_id}`}
+               style={styles.profileLink}
+               onClick={(e) =>
+                 e.stopPropagation()
+              }
             >
-              Sign In
-            </button>
-          </div>
-        ) : (
-          posts.map((p) => (
-            <div
-              key={p.id}
-              style={styles.card}
-              onClick={() => router.push(`/post/${p.id}`)}
-            >
-              <Link
-                href={`/profile/${p.user_id}`}
-                style={styles.profileLink}
-                onClick={(e) => e.stopPropagation()}
-              >
-                View Profile
-              </Link>
+              {p.profiles?.handle
+              ? "Private Profile"
+              : p.profiles?.handle
+                ? `@${p.profiles.handle}`
+                : "View Profile"}
+            </Link>
+         )}
 
-              {p.post_type === "flip" ? (
+            {p.post_type === "flip" ? (
                 <>
                   <p>
                     <b>Shadow:</b> {p.shadow_text}
@@ -477,8 +582,7 @@ useEffect(() => {
                 </div>
               )}
             </div>
-          ))
-        )}
+        ))}
       </section>
 
     </main>
@@ -548,7 +652,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
 
   hero: {
-    padding: 20,
+    padding: "20px 20px 10px",
     textAlign: "center",
   },
 
@@ -582,11 +686,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 700,
   },
 
-  lockedBox: {
-    textAlign: "center",
-    padding: 40,
-  },
-
   profileLink: {
     color: "#39FF88",
     textDecoration: "none",
@@ -597,40 +696,59 @@ const styles: Record<string, React.CSSProperties> = {
 
   toggleRow: {
     display: "flex",
-    gap: 10,
+    gap: 12,
     marginTop: 20,
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   toggleBtn: {
-    flex: 1,
-    padding: 10,
-    borderRadius: 10,
+    padding: "10px 18px",
+    borderRadius: 16,
     border: "1px solid #333",
+    background: "transparent",
+    color: "#EAEAF0",
+    fontSize: 15,
+    fontWeight: 500,
+    minWidth: 120,
   },
 
   createBox: {
-    maxWidth: 600,
-    margin: "0 auto",
-    padding: 16,
+    maxWidth: 620,
+    margin: "0 auto 24px",
+    padding: 20,
+    background: "rgba(255,255,255,0.03)",
+    border: "1px solid rgba(255,255,255,0.06)",
+    borderRadius: 24,
+    backdropFilter: "blur(18px)",
+    boxShadow:
+      "0 10px 40px rgba(0,0,0,0.35)",
   },
 
   input: {
     width: "100%",
-    padding: 10,
-    marginBottom: 10,
-    borderRadius: 10,
-    background: "#111",
-    border: "1px solid #222",
+    padding: 16,
+    marginBottom: 12,
+    borderRadius: 18,
+    background: "#0E0E14",
+    border: "1px solid #23232D",
     color: "#fff",
+    fontSize: 15,
   },
 
   postBtn: {
     width: "100%",
-    padding: 12,
-    borderRadius: 12,
+    padding: 14,
+    borderRadius: 18,
+    border: "none",
     background:
       "linear-gradient(135deg,#7B2FFF,#39FF88)",
+    color: "#fff",
     fontWeight: 800,
+    fontSize: 15,
+    cursor: "pointer",
+    boxShadow:
+      "0 8px 24px rgba(123,47,255,.25)",
   },
 
   feed: {
@@ -640,11 +758,13 @@ const styles: Record<string, React.CSSProperties> = {
   },
 
   card: {
-    background: "#111",
+    background:
+      "linear-gradient(180deg,#111,#0D0D12)",
     border: "1px solid #222",
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 10,
+    padding: 18,
+    borderRadius: 22,
+    marginBottom: 14,
+    transition: "all .2s ease",
   },
 
   actions: {

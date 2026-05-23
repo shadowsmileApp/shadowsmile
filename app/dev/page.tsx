@@ -22,7 +22,38 @@ export default function DevPage() {
 
   async function loadUser() {
     const { data } = await supabase.auth.getUser();
-    setUser(data?.user as any);
+    
+const authUser =
+data?.user;
+
+if (!authUser) {
+  router.replace("/");
+  return;
+}
+
+const {
+  data: profile,
+} = await supabase
+.from("profiles")
+.select("role")
+.eq("id", authUser.id)
+.single();
+
+const isAllowed =
+["admin","founder","developer"]
+.includes(profile?.role || "");
+
+if (!isAllowed) {
+  router.replace("/");
+  return;
+}
+
+
+    setUser({
+  id: authUser.id,
+  email: authUser.email,
+  role: profile?.role || "",
+});
     setLoading(false);
   }
 
@@ -42,27 +73,29 @@ export default function DevPage() {
   /* ================= INIT ================= */
 
   useEffect(() => {
-    loadUser();
+  loadUser();
+}, []);
+
+useEffect(() => {
+  if (user?.role) {
     loadPosts();
-  }, []);
+  }
+}, [user]);
 
   /* ================= GUARD (ADMIN ONLY) ================= */
 
-  const isAdmin = (user as any)?.user_metadata?.role === "admin";
+  const isAdmin =
+  ["admin", "founder", "developer"]
+  .includes(user?.role || "");
 
-  if (loading) {
-    return <div style={styles.loading}>Loading Dev Panel...</div>;
+useEffect(() => {
+  if (!loading && !isAdmin) {
+    router.replace("/");
   }
+}, [loading, isAdmin, router]);  
 
-  if (!isAdmin) {
-    return (
-      <div style={styles.denied}>
-        <h2>Access Denied</h2>
-        <p>You are not an admin.</p>
-
-        <button onClick={() => router.push("/")}>Go Home</button>
-      </div>
-    );
+if (loading || !isAdmin) {
+    return null;
   }
 
   /* ================= UI ================= */

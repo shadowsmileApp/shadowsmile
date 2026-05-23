@@ -54,10 +54,18 @@ export default function ProfilePage() {
 
   const router = useRouter();
 
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] =
+  useState<User | null>(null);
+
+const [profile, setProfile] =
+  useState<Profile | null>(null);
+
+const [posts, setPosts] =
+  useState<Post[]>([]);
+
+const [loading, setLoading] =
+  useState(true);
+
 const [editing, setEditing] =
   useState(false);
 
@@ -73,21 +81,45 @@ const [saving, setSaving] =
 const [avatarFile, setAvatarFile] =
   useState<File | null>(null);
 
+/* ================= FOLLOW SYSTEM ================= */
+
+const [isFollowing, setIsFollowing] =
+  useState(false);
+
+const [followLoading, setFollowLoading] =
+  useState(false);
+
   const [stats, setStats] = useState({
     postCount: 0,
     likesReceived: 0,
   });
 
+const [socialStats, setSocialStats] =
+  useState({
+    followers: 0,
+    following: 0,
+  });
+
   /* ================= LOAD USER ================= */
 
-  useEffect(() => {
-    async function loadUser() {
-      const { data } = await supabase.auth.getUser();
-      setCurrentUser(data?.user || null);
-    }
+useEffect(() => {
+  loadUser();
+}, []);  
 
-    loadUser();
-  }, []);
+async function loadUser() {
+  const { data } =
+    await supabase.auth.getUser();
+
+  const authUser =
+    data?.user;
+
+  if (!authUser) {
+    router.replace("/");
+    return;
+  }
+
+  setCurrentUser(authUser);
+}
 
   /* ================= LOAD PROFILE ================= */
 
@@ -108,23 +140,13 @@ const [avatarFile, setAvatarFile] =
           created_at
         `)
         .eq("id", id)
-        .single();
+        .maybeSingle();
     if (error) {
       console.error(error);
       return;
     }
 
     setProfile(data || null);
-
-    console.log(
-      "Profile role:",
-      data?.role
-    );
-
-    console.log(
-      "Avatar URL:",
-      data?.avatar_url
-    );
 
     setEditName(
       data?.display_name || ""
@@ -133,12 +155,89 @@ const [avatarFile, setAvatarFile] =
     setEditBio(
       data?.bio || ""
     );
+
+/* LOAD FOLLOW STATS */
+
+const [
+  followersResult,
+  followingResult,
+] = await Promise.all([
+  supabase
+    .from("followers")
+    .select("*", {
+      count: "exact",
+      head: true,
+    })
+    .eq(
+      "following_id",
+      id
+    ),
+
+  supabase
+    .from("followers")
+    .select("*", {
+      count: "exact",
+      head: true,
+    })
+    .eq(
+      "follower_id",
+      id
+    ),
+]);
+
+setSocialStats({
+  followers:
+    followersResult.count || 0,
+
+  following:
+    followingResult.count || 0,
+});
   }
 
   loadProfile();
 }, [id]);
 
-  /* ================= LOAD POSTS ================= */
+/* ================= CHECK FOLLOW STATUS ================= */
+
+useEffect(() => {
+  async function checkFollowStatus() {
+    if (
+      !currentUser?.id ||
+      !profile?.id ||
+      currentUser.id === profile.id
+    ) {
+      return;
+    }
+
+    const { data, error } =
+      await supabase
+        .from("followers")
+        .select("id")
+        .eq(
+          "follower_id",
+          currentUser.id
+        )
+        .eq(
+          "following_id",
+          profile.id
+        )
+        .maybeSingle();
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    setIsFollowing(!!data);
+  }
+
+  checkFollowStatus();
+}, [
+  currentUser,
+  profile,
+]);
+
+/* ================= LOAD POSTS ================= */
 
   useEffect(() => {
   async function loadPosts() {
@@ -193,6 +292,91 @@ const [avatarFile, setAvatarFile] =
 
     loadPosts();
   }, [id]);
+
+/* ================= FOLLOW SYSTEM ================= */
+
+async function toggleFollow() {
+  if (
+    !currentUser?.id ||
+    !profile?.id
+  ) return;
+
+  // prevent self-follow
+  if (
+    currentUser.id === profile.id
+  ) return;
+
+  // prevent spam clicking
+  if (followLoading) return;
+
+  try {
+    setFollowLoading(true);
+
+    if (isFollowing) {
+
+      const { error } =
+        await supabase
+          .from("followers")
+          .delete()
+          .eq(
+            "follower_id",
+            currentUser.id
+          )
+          .eq(
+            "following_id",
+            profile.id
+          );
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      setIsFollowing(false);
+
+setSocialStats((prev) => ({
+  ...prev,
+  followers:
+    Math.max(
+      0,
+      prev.followers - 1
+    ),
+}));
+
+    } else {
+
+      const { error } =
+        await supabase
+          .from("followers")
+          .insert({
+            follower_id:
+              currentUser.id,
+
+            following_id:
+              profile.id,
+          });
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      setIsFollowing(true);
+
+setSocialStats((prev) => ({
+  ...prev,
+  followers:
+    prev.followers + 1,
+}));
+
+    }
+
+  } finally {
+    setFollowLoading(false);
+  }
+}
+
+/* ================= SAVE PROFILE ================= */
 
 async function saveProfile() {
   if (!profile?.id) return;
@@ -348,167 +532,239 @@ const profileBio =
         )}
       </div>
 
-      {/* PROFILE CARD */}
-      <section style={styles.profileCard}>
-  <div style={styles.avatar}>
-  {profile?.avatar_url ? (
-    <Image
-  src={profile.avatar_url}
-  alt="avatar"
-  fill
-  unoptimized
-  priority
-  style={styles.avatarImage}
-/>
-  ) : (
-    displayHandle
-      .charAt(1)
-      .toUpperCase()
-  )}
-</div>
-
-  {profile?.role === "admin" && (
-    <div style={styles.adminBadge}>
-      Founder
-    </div>
-  )}
-
-  <h1 style={styles.displayName}>
-    {displayName}
-  </h1>
-
-  <h2 style={styles.handle}>
-    {displayHandle}
-  </h2>
-
-{!editing && (
-  <p style={styles.bio}>
-    {profileBio}
-  </p>
-)}
-
-{isOwnProfile && !editing && (
-  <button
-    style={styles.editButton}
-    onClick={() =>
-      setEditing(true)
-    }
-  >
-    Edit Profile
-  </button>
-)}
-
-{isOwnProfile && editing && (
-  <div style={styles.editBox}>
-   
-    <label style={styles.uploadLabel}>
-      Choose Avatar
-
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(e) =>
-          setAvatarFile(
-            e.target.files?.[0] || null
-          )
-        }
-        style={styles.hiddenInput}
-      />
-    </label>
-
-    {avatarFile && (
-      <img
-        src={URL.createObjectURL(
-          avatarFile
+      {/* PROFILE HEADER V2 */}
+<section style={styles.profileCard}>
+  <div style={styles.profileGrid}>
+    
+    {/* LEFT SIDE — AVATAR */}
+    <div style={styles.avatarColumn}>
+      <div style={styles.avatarLarge}>
+        {profile?.avatar_url ? (
+          <Image
+            src={profile.avatar_url}
+            alt="avatar"
+            fill
+            unoptimized
+            priority
+            style={styles.avatarImage}
+          />
+        ) : (
+          displayHandle.charAt(1).toUpperCase()
         )}
-        alt="preview"
-        style={{
-          width: 90,
-          height: 90,
-          borderRadius: "50%",
-          objectFit: "cover",
-          margin: "0 auto",
-        }}
-      />
-    )}
+      </div>
 
-    <input
-      value={editName}
-      onChange={(e) =>
-        setEditName(
-          e.target.value
-        )
-      }
-      placeholder="Display name"
-      style={styles.input}
-    />
+      {isOwnProfile ? (
+        <button
+          style={styles.profileActionBtn}
+          onClick={() =>
+            router.push("/settings")
+          }
+        >
+          <Settings size={16} />
+          Settings
+        </button>
+      ) : (
+        <>
+          {/* TODO: connect follow system */}
+          {/* TODO: expand follow system:
+              trust graph,
+              private support circles,
+              emotional affinity
+          */}
 
-    <textarea
-      value={editBio}
-      onChange={(e) =>
-        setEditBio(
-          e.target.value
-        )
-      }
-      placeholder="Tell people about yourself"
-      style={styles.textarea}
-    />
-
-    <div style={styles.editActions}>
-      <button
-        style={styles.cancelButton}
-        onClick={() => {
-          setEditName(
-            profile?.display_name || ""
-          );
-
-          setEditBio(
-            profile?.bio || ""
-          );
-
-          setAvatarFile(null);
-
-          setEditing(false);
-        }}
-      >
-        Cancel
-      </button>
-
-      <button
-        style={styles.saveButton}
-        onClick={saveProfile}
-        disabled={saving}
-      >
-        {saving
-          ? "Saving..."
-          : "Save"}
-      </button>
+          <button
+            style={{
+              ...styles.followBtn,
+              background: isFollowing
+                ? "#1C1C24"
+                : "linear-gradient(135deg,#7B2FFF,#9B5DFF)",
+              border: isFollowing
+                ? "1px solid #333"
+                : "none",
+            }}
+            onClick={toggleFollow}
+            disabled={followLoading}
+            >
+               {followLoading
+                 ? "Loading..."
+                 : isFollowing
+                 ? "Connected"
+                 : "Connect"}
+             </button>
+        </>
+      )}
     </div>
+
+    {/* RIGHT SIDE */}
+    <div style={styles.profileContent}>
+      
+      {/* NAME AREA */}
+      <div>
+        <div style={styles.identityRow}>
+          <h1 style={styles.displayName}>
+            {displayName}
+          </h1>
+
+          {["admin", "founder"].includes(
+  profile?.role || ""
+) && (
+  <div style={styles.founderBadge}>
+    Founder
   </div>
 )}
+        </div>
 
-<p style={styles.memberSince}>
-  Member since{" "}
-  {profile?.created_at
-    ? new Date(
-        profile.created_at
-      ).toLocaleDateString()
-    : "Unknown"}
-</p>
+        <h2 style={styles.handle}>
+          {displayHandle}
+        </h2>
+
+        <p style={styles.memberSince}>
+          ShadowSmile member since{" "}
+          {profile?.created_at
+            ? new Date(
+                profile.created_at
+              ).toLocaleDateString()
+            : "Unknown"}
+        </p>
+      </div>
+
+      {/* COUNTERS */}
+      <div style={styles.counterBar}>
+  <button style={styles.counterCard}>
+    <span style={styles.counterNumber}>
+      {socialStats.followers}
+    </span>
+    <span style={styles.counterLabel}>
+      Shadows
+    </span>
+  </button>
+
+  <button style={styles.counterCard}>
+    <span style={styles.counterNumber}>
+      {stats.postCount}
+    </span>
+    <span style={styles.counterLabel}>
+      Posts
+    </span>
+  </button>
+
+  <button style={styles.counterCard}>
+    <span style={styles.counterNumber}>
+      {socialStats.following}
+    </span>
+    <span style={styles.counterLabel}>
+      Smiles
+    </span>
+  </button>
+</div>
+
+      {/* BIO */}
+      {!editing && (
+        <div style={styles.bioCard}>
+          <p style={styles.bio}>
+            {profileBio}
+          </p>
+        </div>
+      )}
+
+      {/* EDIT PROFILE */}
+      {isOwnProfile && !editing && (
+        <button
+          style={styles.editButton}
+          onClick={() =>
+            setEditing(true)
+          }
+        >
+          Edit Profile
+        </button>
+      )}
+
+      {/* EDIT BOX */}
+      {isOwnProfile && editing && (
+        <div style={styles.editBox}>
+          <label style={styles.uploadLabel}>
+            Choose Avatar
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) =>
+                setAvatarFile(
+                  e.target.files?.[0] || null
+                )
+              }
+              style={styles.hiddenInput}
+            />
+          </label>
+
+          {avatarFile && (
+            <img
+              src={URL.createObjectURL(
+                avatarFile
+              )}
+              alt="preview"
+              style={{
+                width: 90,
+                height: 90,
+                borderRadius: 18,
+                objectFit: "cover",
+                margin: "0 auto",
+              }}
+            />
+          )}
+
+          <input
+            value={editName}
+            onChange={(e) =>
+              setEditName(e.target.value)
+            }
+            placeholder="Display name"
+            style={styles.input}
+          />
+
+          <textarea
+            value={editBio}
+            onChange={(e) =>
+              setEditBio(e.target.value)
+            }
+            placeholder="Tell people about yourself"
+            style={styles.textarea}
+          />
+
+          <div style={styles.editActions}>
+            <button
+              style={styles.cancelButton}
+              onClick={() => {
+                setEditName(
+                  profile?.display_name || ""
+                );
+
+                setEditBio(
+                  profile?.bio || ""
+                );
+
+                setAvatarFile(null);
+                setEditing(false);
+              }}
+            >
+              Cancel
+            </button>
+
+            <button
+              style={styles.saveButton}
+              onClick={saveProfile}
+              disabled={saving}
+            >
+              {saving
+                ? "Saving..."
+                : "Save"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
 </section>
-
-      {/* STATS */}
-      <section style={styles.stats}>
-        <div style={styles.statBox}>
-          <h2>{stats.postCount}</h2>
-          <p>Posts</p>
-        </div>
-
-        <div style={styles.statBox}>
-          <h2>{stats.likesReceived}</h2>
-          <p>Likes</p>
-        </div>
-      </section>
 
       {/* POSTS */}
       <section style={styles.feed}>
@@ -626,29 +882,128 @@ const styles: Record<string, React.CSSProperties> = {
   },
 
   profileCard: {
-    textAlign: "center",
-    marginBottom: 24,
-    background: "#111",
-    border: "1px solid #222",
-    borderRadius: 24,
-    padding: 28,
-  },
+  marginBottom: 24,
+  background: "#111",
+  border: "1px solid #222",
+  borderRadius: 28,
+  padding: 28,
+},
 
-  avatar: {
-    position: "relative",
-    overflow: "hidden",
-    width: 90,
-    height: 90,
-    borderRadius: "50%",
-    background:
-      "linear-gradient(135deg,#7B2FFF,#39FF88)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    margin: "0 auto 16px",
-    fontSize: 34,
-    fontWeight: 900,
-  },
+profileGrid: {
+  display: "grid",
+  gridTemplateColumns: "190px 1fr",
+  gap: 28,
+  alignItems: "start",
+},
+
+avatarColumn: {
+  display: "flex",
+  flexDirection: "column",
+  gap: 18,
+  alignItems: "center",
+},
+
+avatarLarge: {
+  position: "relative",
+  overflow: "hidden",
+  width: 170,
+  height: 170,
+  borderRadius: 24,
+  background:
+    "linear-gradient(135deg,#7B2FFF,#39FF88)",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  fontSize: 48,
+  fontWeight: 900,
+  border: "1px solid rgba(123,47,255,.25)",
+},
+
+profileActionBtn: {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 8,
+  width: "100%",
+  background: "#17171D",
+  border: "1px solid #2A2A35",
+  color: "#fff",
+  padding: "14px 18px",
+  borderRadius: 16,
+  cursor: "pointer",
+  fontWeight: 700,
+},
+
+followBtn: {
+  width: "100%",
+  background:
+    "linear-gradient(135deg,#7B2FFF,#9B5DFF)",
+  border: "none",
+  color: "#fff",
+  padding: "14px 18px",
+  borderRadius: 16,
+  cursor: "pointer",
+  fontWeight: 800,
+  fontSize: 16,
+},
+
+profileContent: {
+  display: "flex",
+  flexDirection: "column",
+  gap: 20,
+},
+
+identityRow: {
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+  flexWrap: "wrap",
+},
+
+founderBadge: {
+  padding: "8px 14px",
+  borderRadius: 14,
+  background: "rgba(123,47,255,.12)",
+  border: "1px solid rgba(123,47,255,.3)",
+  color: "#B88CFF",
+  fontWeight: 700,
+  fontSize: 13,
+},
+
+counterBar: {
+  display: "grid",
+  gridTemplateColumns: "repeat(3,1fr)",
+  gap: 12,
+},
+
+counterCard: {
+  background: "#15151A",
+  border: "1px solid #25252D",
+  borderRadius: 18,
+  padding: "18px 12px",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  cursor: "pointer",
+},
+
+counterNumber: {
+  fontSize: 28,
+  fontWeight: 800,
+},
+
+counterLabel: {
+  fontSize: 14,
+  color: "#888",
+  marginTop: 4,
+},
+
+bioCard: {
+  background: "#15151A",
+  border: "1px solid #25252D",
+  borderRadius: 20,
+  padding: 18,
+},
 
 avatarImage: {
   objectFit: "cover",
@@ -667,26 +1022,9 @@ displayName: {
 },
 
 bio: {
-  color: "#AAA",
-  maxWidth: 420,
-  margin: "12px auto",
-  lineHeight: 1.5,
-},
-
-adminBadge: {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: "8px 14px",
-  borderRadius: 999,
-  background:
-    "linear-gradient(135deg,#7B2FFF,#39FF88)",
-  fontSize: 12,
-  fontWeight: 800,
-  color: "#0A0A0F",
-  marginBottom: 12,
-  boxShadow:
-    "0 6px 20px rgba(123,47,255,0.35)",
+  color: "#C9C9D1",
+  lineHeight: 1.7,
+  margin: 0,
 },
 
   memberSince: {
@@ -759,21 +1097,6 @@ saveButton: {
   fontWeight: 800,
   cursor: "pointer",
 },
-
-stats: {
-  display: "flex",
-  gap: 12,
-  marginBottom: 24,
-},
-
-  statBox: {
-    flex: 1,
-    background: "#111",
-    border: "1px solid #222",
-    borderRadius: 20,
-    padding: 20,
-    textAlign: "center",
-  },
 
   feed: {
     marginTop: 20,

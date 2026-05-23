@@ -4,6 +4,17 @@ import { useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { useRouter } from "next/navigation";
 
+/**
+ * SHADOWSMILE AUTH PHILOSOPHY
+ *
+ * Password recovery should feel calm,
+ * safe, and low-pressure.
+ *
+ * Avoid fear language,
+ * urgency tactics,
+ * or stressful UX.
+ */
+
 export default function ResetPasswordPage() {
   const router = useRouter();
 
@@ -16,6 +27,13 @@ export default function ResetPasswordPage() {
   async function updatePassword() {
     try {
       setLoading(true);
+
+if (password.length < 8) {
+  alert(
+    "Password must be at least 8 characters."
+  );
+  return;
+}
 
       const { error } =
         await supabase.auth.updateUser({
@@ -45,12 +63,12 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-md bg-black/40 border border-white/10 rounded-3xl p-8 backdrop-blur-2xl">
 
         <h1 className="text-3xl font-bold text-white mb-2">
-          Reset Password
-        </h1>
+  Return As You Are
+</h1>
 
         <p className="text-gray-400 mb-6">
-          Enter your new password.
-        </p>
+  Create a new password to continue safely.
+</p>
 
         <input
           type="password"
@@ -73,7 +91,7 @@ export default function ResetPasswordPage() {
         >
           {loading
             ? "Updating..."
-            : "Update Password"}
+            : "Continue"}
         </button>
       </div>
     </main>

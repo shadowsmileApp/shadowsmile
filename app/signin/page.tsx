@@ -48,7 +48,7 @@ export default function SignInPage() {
           provider: "google",
           options: {
             redirectTo:
-              "http://localhost:3000",
+              `${window.location.origin}`,
           },
         }
       );
@@ -66,7 +66,7 @@ export default function SignInPage() {
       if (
         mode === "signup" &&
         !/^[a-zA-Z0-9_]{3,20}$/.test(
-          handle
+          handle.trim()
         )
       ) {
         alert(
@@ -76,6 +76,25 @@ export default function SignInPage() {
       }
 
       if (mode === "signup") {
+
+const trimmedHandle =
+    handle.trim().toLowerCase();
+
+  const {
+    data: existingHandle,
+  } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("handle", trimmedHandle)
+    .maybeSingle();
+
+  if (existingHandle) {
+    alert(
+      "This username is already taken."
+    );
+    return;
+  }
+
         const {
           data,
           error,
@@ -95,25 +114,50 @@ export default function SignInPage() {
         }
 
         if (data.user) {
-          const { error: profileError } =
-            await supabase
-              .from("profiles")
-              .insert({
-                id: data.user.id,
-                handle: handle.trim(),
-                display_name:
-                  handle.trim(),
-                bio: "",
-                role: "user",
-              });
+  const profilePayload = {
+    id: data.user.id,
+    handle: handle.trim(),
+    display_name: handle.trim(),
+    bio: "",
+    role: "user",
+  };
 
-          if (profileError) {
-            console.error(profileError);
-            alert(
-              "Account created, but profile setup failed."
-            );
-          }
-        }
+  // First attempt
+  let { error: profileError } =
+    await supabase
+      .from("profiles")
+      .insert(profilePayload);
+
+  // Quiet repair attempt
+  if (profileError) {
+    console.warn(
+      "Profile insert failed, retrying...",
+      profileError
+    );
+
+    // Small pause
+    await new Promise((resolve) =>
+      setTimeout(resolve, 1000)
+    );
+
+    // Second attempt
+    const retry =
+      await supabase
+        .from("profiles")
+        .insert(profilePayload);
+
+    profileError = retry.error;
+  }
+
+  // Final failure
+  if (profileError) {
+    console.error(profileError);
+
+    alert(
+      "Account created, but profile setup needs a quick refresh. Try signing in."
+    );
+  }
+}
 
 
         alert(
@@ -176,9 +220,8 @@ export default function SignInPage() {
           </h1>
 
           <p className="text-gray-400 text-sm mt-3 italic">
-            Express the Shadow.
-            Share the Smile.
-          </p>
+  Enter As You Are.
+</p>
         </div>
 
         {/* Mode Toggle */}
@@ -280,7 +323,7 @@ export default function SignInPage() {
                   email,
                   {
                     redirectTo:
-                      "http://localhost:3000/reset-password",
+                      `${window.location.origin}/reset-password`,
                   }
                 );
 
@@ -315,7 +358,7 @@ export default function SignInPage() {
           {loading
             ? "Loading..."
             : mode === "signin"
-            ? "Enter the Light"
+            ? "Enter As You Are"
             : "Create Account"}
         </button>
 
