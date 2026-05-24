@@ -1,6 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, {
+  useEffect,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 
@@ -15,18 +18,53 @@ export default function CreatePage() {
   const [smile, setSmile] = useState("");
   const [text, setText] = useState("");
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  /* ================= GET USER ================= */
+  /* ================= LOAD USER ================= */
 
-  React.useEffect(() => {
-    async function getUser() {
-      const { data } = await supabase.auth.getUser();
-      setUser(data?.user || null);
+useEffect(() => {
+  async function loadUser() {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      setUser(
+        session?.user ?? null
+      );
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
+  }
 
-    getUser();
-  }, []);
+  loadUser();
+
+  const {
+    data: { subscription },
+  } =
+    supabase.auth.onAuthStateChange(() => {
+      loadUser();
+    });
+
+  return () => {
+    subscription.unsubscribe();
+  };
+}, []);
+
+useEffect(() => {
+  if (
+    !loading &&
+    !user
+  ) {
+    router.push("/signin");
+  }
+}, [
+  loading,
+  user,
+  router,
+]);
 
   /* ================= CREATE POST ================= */
 
@@ -85,6 +123,14 @@ export default function CreatePage() {
   }
 
   /* ================= UI ================= */
+
+if (loading) {
+  return (
+    <div style={styles.page}>
+      <p>Loading...</p>
+    </div>
+  );
+}
 
   return (
     <main style={styles.page}>

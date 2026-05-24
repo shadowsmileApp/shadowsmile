@@ -171,6 +171,12 @@ const [role, setRole] = useState("");
     };
   }, []);
 
+useEffect(() => {
+  if (!loading && !user) {
+    router.push("/signin");
+  }
+}, [loading, user, router]);
+
   useEffect(() => {
   loadPosts();
 }, [user]);
@@ -338,12 +344,16 @@ loadPosts();
   /* ================= LOADING ================= */
 
   if (loading) {
-    return (
-      <div style={styles.loading}>
-        Loading ShadowSmile...
-      </div>
-    );
-  }
+  return (
+    <div style={styles.loading}>
+      Loading ShadowSmile...
+    </div>
+  );
+}
+
+if (!user) {
+  return null;
+}
 
   /* ================= UI ================= */
 

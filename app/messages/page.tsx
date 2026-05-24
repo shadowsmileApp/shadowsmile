@@ -6,6 +6,10 @@ import {
   useRef,
 } from "react";
 
+import { useRouter } from "next/navigation";
+import { User } from "@supabase/supabase-js";
+import { supabase } from "../../lib/supabase";
+
 export default function MessagesPage() {
   const [selectedChat, setSelectedChat] =
     useState<string | null>(null);
@@ -45,6 +49,14 @@ const [pinnedChats,
 useState<string[]>(
   []
 );
+
+const router = useRouter();
+
+const [user, setUser] =
+  useState<User | null>(null);
+
+const [loading, setLoading] =
+  useState(true);
 
 const [mutedChats,
   setMutedChats] =
@@ -261,6 +273,34 @@ useState<
 });
 
 useEffect(() => {
+  async function loadUser() {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      setUser(session?.user ?? null);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  loadUser();
+
+  const {
+    data: { subscription },
+  } = supabase.auth.onAuthStateChange(() => {
+    loadUser();
+  });
+
+  return () => {
+    subscription.unsubscribe();
+  };
+}, []);
+
+useEffect(() => {
   const savedMessages =
     localStorage.getItem(
       "shadowsmile_messages"
@@ -467,6 +507,12 @@ useEffect(() => {
 }, [archivedChats]);
 
 useEffect(() => {
+  if (!loading && !user) {
+    router.push("/signin");
+  }
+}, [loading, user, router]);
+
+useEffect(() => {
   if (selectedChat) {
     localStorage.setItem(
       "shadowsmile_selected_chat",
@@ -474,6 +520,27 @@ useEffect(() => {
     );
   }
 }, [selectedChat]);
+
+if (loading) {
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        background: "#0A0A0F",
+        color: "#fff",
+      }}
+    >
+      Loading...
+    </div>
+  );
+}
+
+if (!user) {
+  return null;
+}
 
   return (
     <main

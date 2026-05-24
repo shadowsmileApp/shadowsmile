@@ -27,7 +27,7 @@ const authUser =
 data?.user;
 
 if (!authUser) {
-  router.replace("/");
+  router.replace("/signin");
   return;
 }
 
@@ -44,7 +44,7 @@ const isAllowed =
 .includes(profile?.role || "");
 
 if (!isAllowed) {
-  router.replace("/");
+  router.replace("/signin");
   return;
 }
 

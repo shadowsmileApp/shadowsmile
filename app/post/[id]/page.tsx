@@ -1,7 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import {
+  useParams,
+  useRouter,
+} from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 import { Heart, MessageSquare } from "lucide-react";
 
@@ -32,17 +35,55 @@ export default function PostPage() {
   const [commentText, setCommentText] = useState("");
 
   const [user, setUser] = useState<any>(null);
+const [loading, setLoading] = useState(true);
 
   /* ================= LOAD USER ================= */
 
   useEffect(() => {
-    async function getUser() {
-      const { data } = await supabase.auth.getUser();
-      setUser(data?.user || null);
-    }
+  async function loadUser() {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-    getUser();
-  }, []);
+      setUser(
+        session?.user ?? null
+      );
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  loadUser();
+
+  const {
+    data: { subscription },
+  } =
+    supabase.auth.onAuthStateChange(() => {
+      loadUser();
+    });
+
+  return () => {
+    subscription.unsubscribe();
+  };
+}, []);
+
+const router = useRouter();
+
+useEffect(() => {
+  if (
+    !loading &&
+    !user
+  ) {
+    router.push("/signin");
+  }
+}, [
+  loading,
+  user,
+  router,
+]);
 
   /* ================= LOAD POST ================= */
 
@@ -144,6 +185,18 @@ export default function PostPage() {
   }
 
   /* ================= UI ================= */
+
+if (loading) {
+  return (
+    <div style={styles.page}>
+      <p>Loading...</p>
+    </div>
+  );
+}
+
+if (!user) {
+  return null;
+}
 
   if (!post) {
     return (

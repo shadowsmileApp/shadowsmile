@@ -103,23 +103,48 @@ const [socialStats, setSocialStats] =
   /* ================= LOAD USER ================= */
 
 useEffect(() => {
-  loadUser();
-}, []);  
+  async function loadUser() {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-async function loadUser() {
-  const { data } =
-    await supabase.auth.getUser();
-
-  const authUser =
-    data?.user;
-
-  if (!authUser) {
-    router.replace("/");
-    return;
+      setCurrentUser(
+        session?.user ?? null
+      );
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  setCurrentUser(authUser);
-}
+  loadUser();
+
+  const {
+    data: { subscription },
+  } =
+    supabase.auth.onAuthStateChange(() => {
+      loadUser();
+    });
+
+  return () => {
+    subscription.unsubscribe();
+  };
+}, []);
+
+useEffect(() => {
+  if (
+    !loading &&
+    !currentUser
+  ) {
+    router.push("/signin");
+  }
+}, [
+  loading,
+  currentUser,
+  router,
+]);
 
   /* ================= LOAD PROFILE ================= */
 
@@ -286,7 +311,6 @@ useEffect(() => {
         likesReceived,
       });
     } finally {
-      setLoading(false);
     }
   }
 
@@ -501,12 +525,16 @@ const profileBio =
   /* ================= LOADING ================= */
 
   if (loading) {
-    return (
-      <div style={styles.loading}>
-        Loading profile...
-      </div>
-    );
-  }
+  return (
+    <div style={styles.loading}>
+      Loading profile...
+    </div>
+  );
+}
+
+if (!currentUser) {
+  return null;
+}
 
   /* ================= UI ================= */
 
