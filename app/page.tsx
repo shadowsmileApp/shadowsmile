@@ -60,8 +60,7 @@ export default function Page() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
 
-const [role, setRole] =
-  useState("");
+const [role, setRole] = useState("");
 
   const [mode, setMode] = useState<"structured" | "normal">("structured");
 
@@ -184,6 +183,23 @@ const [role, setRole] =
       return;
     }
 
+
+  // Prevent empty posts
+  if (
+    mode === "structured" &&
+    !shadow.trim() &&
+    !smile.trim()
+  ) {
+    return;
+  }
+
+  if (
+    mode === "normal" &&
+    !text.trim()
+  ) {
+    return;
+  }
+
     const payload =
   mode === "structured"
     ? {
@@ -265,15 +281,36 @@ const [role, setRole] =
       return;
     }
 
-    if (!commentText.trim()) return;
+    if (
+  !commentTexts[
+    postId
+  ]?.trim()
+)
+  return;
 
-    await supabase.from("comments").insert({
+    const { error } =
+  await supabase
+    .from("comments")
+    .insert({
       post_id: postId,
       user_id: user.id,
-      content: commentText,
+      content:
+        commentTexts[
+          postId
+        ],
     });
 
-    setCommentText("");
+if (error) {
+  console.error(error);
+  return;
+}
+
+loadPosts();
+
+    setCommentTexts((prev) => ({
+  ...prev,
+  [postId]: "",
+}));
     setOpenComments(null);
   }
 
@@ -495,42 +532,68 @@ const [role, setRole] =
 
       {/* FEED */}
       <section style={styles.feed}>
-        {posts.map((p) => (
-          <div
-            key={p.id}
-            style={styles.card}
-            onClick={() => router.push(`/post/${p.id}`)}
-          >
+  {posts.length === 0 && (
+    <div
+      style={{
+        textAlign: "center",
+        color: "#888",
+        padding: 30,
+      }}
+    >
+      No posts yet.
+      <br />
+      Be the first to share.
+    </div>
+  )}
+
+  {posts.map((p) => (
+  <div
+    key={p.id}
+    style={styles.card}
+  >
          {!p.is_anonymous &&
-           p.user_id && (
-             <Link
-               href={`/profile/${p.user_id}`}
-               style={styles.profileLink}
-               onClick={(e) =>
-                 e.stopPropagation()
-              }
-            >
-              {p.profiles?.handle
-              ? "Private Profile"
-              : p.profiles?.handle
-                ? `@${p.profiles.handle}`
-                : "View Profile"}
-            </Link>
-         )}
+  p.user_id && (
+    p.profiles?.is_private ? (
+      <span style={styles.profileLink}>
+        Private Profile
+      </span>
+    ) : (
+      <Link
+        href={`/profile/${p.user_id}`}
+        style={styles.profileLink}
+        onClick={(e) =>
+          e.stopPropagation()
+        }
+      >
+        {p.profiles?.handle
+          ? `@${p.profiles.handle}`
+          : "View Profile"}
+      </Link>
+    )
+)}
 
-            {p.post_type === "flip" ? (
-                <>
-                  <p>
-                    <b>Shadow:</b> {p.shadow_text}
-                  </p>
+            <div
+  onClick={() =>
+    router.push(`/post/${p.id}`)
+  }
+  style={{
+    cursor: "pointer",
+  }}
+>
+  {p.post_type === "flip" ? (
+    <>
+      <p>
+        <b>Shadow:</b> {p.shadow_text}
+      </p>
 
-                  <p style={{ color: "#39FF88" }}>
-                    <b>Smile:</b> {p.smile_text}
-                  </p>
-                </>
-              ) : (
-                <p>{p.content}</p>
-              )}
+      <p style={{ color: "#39FF88" }}>
+        <b>Smile:</b> {p.smile_text}
+      </p>
+    </>
+  ) : (
+    <p>{p.content}</p>
+  )}
+</div>
 
               <div
                 style={styles.actions}
@@ -565,10 +628,20 @@ const [role, setRole] =
               {openComments === p.id && (
                 <div style={styles.commentBox}>
                   <input
-                    value={commentText}
+                    value={
+  commentTexts[
+    p.id
+  ] || ""
+}
                     onChange={(e) =>
-                      setCommentText(e.target.value)
-                    }
+  setCommentTexts(
+    (prev) => ({
+      ...prev,
+      [p.id]:
+        e.target.value,
+    })
+  )
+}
                     placeholder="Write comment..."
                     style={styles.commentInput}
                   />
