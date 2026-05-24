@@ -22,3 +22,13 @@ build
 # accidental backups
 *.save
 *.bak
+
+# Build
+*.tsbuildinfo
+
+# Backup files
+*.backup
+
+# Security / audit dumps
+full-*.txt
+security-*.txt

@@ -1,5 +1,0 @@
-./app/profile/[id]/page.tsx
-./app/messages/page.tsx
-./lib/supabase.ts
-./lib/supabase-server.ts
-./docs/backups/page.tsx.backup.authflow
