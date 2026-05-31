@@ -32,3 +32,8 @@ build
 # Security / audit dumps
 full-*.txt
 security-*.txt
+
+# AI project management docs
+docs/00-shadow-smile-master-system.md
+docs/01-shadow-smile-project-state.md
+docs/UPDATE-PROCEDURE.md

@@ -10,6 +10,9 @@ import { useRouter } from "next/navigation";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
 
+import MessageBubble from "./components/MessageBubble";
+import MessageInput from "./components/MessageInput";
+
 export default function MessagesPage() {
   const [selectedChat, setSelectedChat] =
     useState<string | null>(null);
@@ -21,6 +24,10 @@ export default function MessagesPage() {
 
   const [messageText, setMessageText] =
     useState("");
+
+const [
+isMobile, setIsMobile] =
+  useState(false);
 
 const [searchTerm,
   setSearchTerm] =
@@ -70,10 +77,30 @@ useState<string[]>(
   []
 );
 
+const [unreadChats,
+  setUnreadChats] =
+useState<
+  Record<string, number>
+>({
+  shadowfriend: 2,
+  gamerzone: 1,
+  musicvibes: 4,
+});
+
 const chatContainerRef =
   useRef<HTMLDivElement | null>(
     null
   );
+
+const shouldAutoScrollRef =
+  useRef(true);
+
+const initialLoadDoneRef =
+  useRef(false);
+
+const [showScrollBottom,
+  setShowScrollBottom] =
+useState(false);
 
   const [messagesByChat,
   setMessagesByChat] =
@@ -86,6 +113,7 @@ useState<
         | "them";
       text: string;
       time: string;
+      status?: string;
     }[]
   >
 >({
@@ -301,6 +329,27 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
+  const checkMobile = () => {
+    setIsMobile(
+      window.innerWidth < 768
+    );
+  };
+
+  checkMobile();
+
+  window.addEventListener(
+    "resize",
+    checkMobile
+  );
+
+  return () =>
+    window.removeEventListener(
+      "resize",
+      checkMobile
+    );
+}, []);
+
+useEffect(() => {
   const savedMessages =
     localStorage.getItem(
       "shadowsmile_messages"
@@ -311,146 +360,209 @@ useEffect(() => {
       "shadowsmile_requests"
     );
 
-const savedSelectedChat =
-  localStorage.getItem(
-    "shadowsmile_selected_chat"
-  );
-
-const savedActivity =
-  localStorage.getItem(
-    "shadowsmile_chat_activity"
-  );
-
-const savedPinned =
-  localStorage.getItem(
-    "shadowsmile_pinned_chats"
-  );
-
-const savedMuted =
-  localStorage.getItem(
-    "shadowsmile_muted_chats"
-  );
-
-const savedArchived =
-  localStorage.getItem(
-    "shadowsmile_archived_chats"
-  );
-
-  if (savedMessages) {
-  const parsedMessages =
-    JSON.parse(
-      savedMessages
+  const savedSelectedChat =
+    localStorage.getItem(
+      "shadowsmile_selected_chat"
     );
 
-  setMessagesByChat(
-    (prev) => ({
-      ...prev,
-      ...parsedMessages,
-    })
-  );
-}
+  const savedActivity =
+    localStorage.getItem(
+      "shadowsmile_chat_activity"
+    );
 
-  if (savedRequests) {
-  setRequestStatusByChat(
-    JSON.parse(
-      savedRequests
-    )
-  );
-}
+  const savedPinned =
+    localStorage.getItem(
+      "shadowsmile_pinned_chats"
+    );
 
-if (savedActivity) {
-  setChatActivity(
-    JSON.parse(
-      savedActivity
-    )
-  );
-}
+  const savedMuted =
+    localStorage.getItem(
+      "shadowsmile_muted_chats"
+    );
 
-if (savedPinned) {
-  setPinnedChats(
-    JSON.parse(
-      savedPinned
-    )
-  );
-}
+  const savedArchived =
+    localStorage.getItem(
+      "shadowsmile_archived_chats"
+    );
 
-if (savedMuted) {
-  setMutedChats(
-    JSON.parse(
-      savedMuted
-    )
-  );
-}
+  const savedUnread =
+    localStorage.getItem(
+      "shadowsmile_unread_chats"
+    );
 
-if (savedArchived) {
-  setArchivedChats(
-    JSON.parse(
-      savedArchived
-    )
-  );
-}
+  // LOAD MESSAGES
+  if (savedMessages) {
+    const parsedMessages =
+      JSON.parse(savedMessages);
 
-if (!savedActivity) {
-  const starterActivity:
-    Record<
-      string,
-      number
-    > = {};
+    setMessagesByChat(
+      (prev) => ({
+        ...prev,
+        ...parsedMessages,
+      })
+    );
 
-  Object.keys(
-    messagesByChat
-  ).forEach(
-    (
-      chatName,
-      index
-    ) => {
-      starterActivity[
-        chatName
-      ] =
-        Date.now() -
-        index * 1000;
+    // Generate starter activity
+    // ONLY if no saved activity exists
+    if (!savedActivity) {
+      const starterActivity:
+        Record<
+          string,
+          number
+        > = {};
+
+      Object.keys(
+        parsedMessages
+      ).forEach(
+        (
+          chatName,
+          index
+        ) => {
+          starterActivity[
+            chatName
+          ] =
+            Date.now() -
+            index * 1000;
+        }
+      );
+
+      setChatActivity(
+        starterActivity
+      );
     }
-  );
+  }
 
-  setChatActivity(
-    starterActivity
-  );
-}
+  // LOAD REQUESTS
+  if (savedRequests) {
+    setRequestStatusByChat(
+      JSON.parse(
+        savedRequests
+      )
+    );
+  }
 
-if (savedSelectedChat) {
-  setSelectedChat(
-    savedSelectedChat
-  );
+  // LOAD ACTIVITY
+  if (savedActivity) {
+    setChatActivity(
+      JSON.parse(
+        savedActivity
+      )
+    );
+  }
 
-  const parsedRequests =
-    savedRequests
-      ? JSON.parse(
-          savedRequests
-        )
-      : {};
+  // LOAD PINNED
+  if (savedPinned) {
+    setPinnedChats(
+      JSON.parse(
+        savedPinned
+      )
+    );
+  }
 
-  setChatAccess(
-  parsedRequests[
-    savedSelectedChat
-  ] === false
-    ? "request"
-    : "open"
-);
-}
+  // LOAD MUTED
+  if (savedMuted) {
+    setMutedChats(
+      JSON.parse(
+        savedMuted
+      )
+    );
+  }
+
+  // LOAD ARCHIVED
+  if (savedArchived) {
+    setArchivedChats(
+      JSON.parse(
+        savedArchived
+      )
+    );
+  }
+
+  // LOAD UNREAD
+  if (savedUnread) {
+    setUnreadChats(
+      JSON.parse(
+        savedUnread
+      )
+    );
+  }
+
+  // RESTORE SELECTED CHAT
+  if (savedSelectedChat) {
+    setSelectedChat(
+      savedSelectedChat
+    );
+
+    const parsedRequests =
+      savedRequests
+        ? JSON.parse(
+            savedRequests
+          )
+        : {};
+
+    setChatAccess(
+      parsedRequests[
+        savedSelectedChat
+      ] === false
+        ? "request"
+        : "open"
+    );
+
+    shouldAutoScrollRef.current =
+      true;
+
+    initialLoadDoneRef.current =
+      false;
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (
+          chatContainerRef.current
+        ) {
+          chatContainerRef.current.scrollTop =
+            chatContainerRef.current
+              .scrollHeight;
+        }
+      });
+    });
+  }
 }, []);
 
 useEffect(() => {
+if (!selectedChat) return;
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const container =
+        chatContainerRef.current;
+
+      if (!container) return;
+
+      container.scrollTop =
+        container.scrollHeight;
+
+      shouldAutoScrollRef.current =
+        true;
+    });
+  });
+}, [selectedChat]);
+
+useEffect(() => {
+  const container =
+    chatContainerRef.current;
+
   if (
-    chatContainerRef.current
-  ) {
-    chatContainerRef.current.scrollTop =
-      chatContainerRef.current
-        .scrollHeight;
-  }
-}, [
-  messagesByChat,
-  selectedChat,
-]);
+    !container ||
+    !shouldAutoScrollRef.current
+  )
+    return;
+
+  requestAnimationFrame(() => {
+    container.scrollTo({
+top: container.scrollHeight,
+behavior: "smooth",
+  });
+});
+}, [messagesByChat]);
 
 useEffect(() => {
   localStorage.setItem(
@@ -507,10 +619,29 @@ useEffect(() => {
 }, [archivedChats]);
 
 useEffect(() => {
+  localStorage.setItem(
+    "shadowsmile_unread_chats",
+    JSON.stringify(
+      unreadChats
+    )
+  );
+}, [unreadChats]);
+
+useEffect(() => {
   if (!loading && !user) {
     router.push("/signin");
   }
 }, [loading, user, router]);
+
+useEffect(() => {
+  if (
+    typeof window !==
+    "undefined"
+  ) {
+    window.history.scrollRestoration =
+      "manual";
+  }
+}, []);
 
 useEffect(() => {
   if (selectedChat) {
@@ -518,8 +649,269 @@ useEffect(() => {
       "shadowsmile_selected_chat",
       selectedChat
     );
+  } else {
+    localStorage.removeItem(
+      "shadowsmile_selected_chat"
+    );
   }
 }, [selectedChat]);
+
+const handleSendMessage =
+  () => {
+    if (
+      !messageText.trim()
+    )
+      return;
+
+    // PRIVATE REQUEST
+    if (
+      chatAccess ===
+        "request" &&
+      selectedChat &&
+      requestStatusByChat[
+        selectedChat
+      ] === false &&
+      (
+        messagesByChat[
+          selectedChat
+        ]?.filter(
+          (m) =>
+            m.sender ===
+            "me"
+        ).length || 0
+      ) === 0
+    ) {
+      setRequestStatusByChat(
+        (prev) => ({
+          ...prev,
+
+          [selectedChat]:
+            false,
+        })
+      );
+
+      setMessagesByChat(
+        (prev) => ({
+          ...prev,
+
+          [selectedChat]: [
+            ...(prev[
+              selectedChat
+            ] || []),
+
+            {
+              sender: "me",
+
+              text:
+                messageText,
+
+              time:
+                new Date().toLocaleTimeString(
+                  [],
+                  {
+                    hour:
+                      "numeric",
+
+                    minute:
+                      "2-digit",
+                  }
+                ),
+
+              status:
+                "Sent",
+            },
+          ],
+        })
+      );
+
+      setChatActivity(
+        (prev) => ({
+          ...prev,
+
+          [selectedChat]:
+            Date.now(),
+        })
+      );
+
+      setMessageText("");
+
+      return;
+    }
+
+    // NORMAL MESSAGE
+    if (
+      chatAccess ===
+      "open"
+    ) {
+      setMessagesByChat(
+        (prev) => ({
+          ...prev,
+
+          [selectedChat!]: [
+            ...(prev[
+              selectedChat!
+            ] || []),
+
+            {
+              sender: "me",
+
+              text:
+                messageText,
+
+              time:
+                new Date().toLocaleTimeString(
+                  [],
+                  {
+                    hour:
+                      "numeric",
+
+                    minute:
+                      "2-digit",
+                  }
+                ),
+
+              status:
+                "Sent",
+            },
+          ],
+        })
+      );
+
+      setChatActivity(
+        (prev) => ({
+          ...prev,
+
+          [selectedChat!]:
+            Date.now(),
+        })
+      );
+
+      setMessageText("");
+
+      const activeChat =
+        selectedChat;
+
+      setTimeout(() => {
+        const replies = [
+          "lol",
+          "real",
+          "that's wild",
+          "fr 😂",
+          "I get that",
+          "interesting",
+          "tell me more",
+          "nahhh",
+          "💀",
+          "you serious?",
+        ];
+
+        const randomReply =
+          replies[
+            Math.floor(
+              Math.random() *
+                replies.length
+            )
+          ];
+
+        setMessagesByChat(
+          (prev) => {
+            if (
+              !prev[
+                activeChat!
+              ]
+            ) {
+              return prev;
+            }
+
+            return {
+              ...prev,
+
+              [activeChat!]:
+                (
+                  prev[
+                    activeChat!
+                  ] || []
+                ).map(
+                  (
+                    msg,
+                    index,
+                    arr
+                  ) => {
+                    if (
+                      msg.sender ===
+                        "me" &&
+                      index ===
+                        arr.length -
+                          1
+                    ) {
+                      return {
+                        ...msg,
+
+                        status:
+                          "Read",
+                      };
+                    }
+
+                    return msg;
+                  }
+                ),
+            };
+          }
+        );
+
+        setMessagesByChat(
+          (prev) => {
+            if (
+              !prev[
+                activeChat!
+              ]
+            ) {
+              return prev;
+            }
+
+            return {
+              ...prev,
+
+              [activeChat!]: [
+                ...(prev[
+                  activeChat!
+                ] || []),
+
+                {
+                  sender:
+                    "them",
+
+                  text:
+                    randomReply,
+
+                  time:
+                    new Date().toLocaleTimeString(
+                      [],
+                      {
+                        hour:
+                          "numeric",
+
+                        minute:
+                          "2-digit",
+                      }
+                    ),
+                },
+              ],
+            };
+          }
+        );
+
+        setChatActivity(
+          (prev) => ({
+            ...prev,
+
+            [activeChat!]:
+              Date.now(),
+          })
+        );
+      }, 2500);
+    }
+  };
 
 if (loading) {
   return (
@@ -626,7 +1018,7 @@ if (!user) {
       "hidden",
   }}
 >
-        {/* LEFT SIDE */}
+        {(!isMobile || !selectedChat) && (
 <section
   style={{
     width: 340,
@@ -910,6 +1302,13 @@ if (!user) {
           chatName
         );
 
+setUnreadChats(
+  (prev) => ({
+    ...prev,
+    [chatName]: 0,
+  })
+);
+
         setChatAccess(
   requestStatusByChat[
     chatName
@@ -919,20 +1318,31 @@ if (!user) {
 );
       }}
       style={{
-        background:
-          "#111118",
-        border:
-          "1px solid #222",
-        borderRadius: 20,
-        padding: 14,
-        cursor: "pointer",
+  background:
+    selectedChat === chatName
+      ? "linear-gradient(180deg,#181827,#12121d)"
+      : "#111118",
 
-position:
-"relative",
+  border:
+    selectedChat === chatName
+      ? "1px solid #39FF88"
+      : "1px solid #222",
 
-overflow:
-"visible",
-      }}
+  boxShadow:
+    selectedChat === chatName
+      ? "0 0 0 1px rgba(57,255,136,.15)"
+      : "none",
+
+  borderRadius: 20,
+  padding: 14,
+  cursor: "pointer",
+
+  position: "relative",
+  overflow: "visible",
+
+  transition:
+    "all .18s ease",
+}}
     >
       <div
   style={{
@@ -1314,42 +1724,106 @@ transform:
   </div>
 </div>
 
-      <div
-        style={{
-          color: "#888",
-          fontSize: 14,
-          whiteSpace:
-            "nowrap",
-          overflow:
-            "hidden",
-          textOverflow:
-            "ellipsis",
-        }}
-      >
-        {(
-  messagesByChat[
-    chatName
-  ]?.slice(-1)[0]
-    ?.text ||
-  "No messages yet"
-).slice(0, 42)}
+<div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    marginTop: 4,
+  }}
+>
+  {/* preview text */}
+  <div
+    style={{
+      color: "#888",
+      fontSize: 14,
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      flex: 1,
+    }}
+  >
+    {(
+      messagesByChat[chatName]
+        ?.slice(-1)[0]
+        ?.text ||
+      "No messages yet"
+    ).slice(0, 42)}
 
-        {(
-  messagesByChat[
+    {(
+      messagesByChat[chatName]
+        ?.slice(-1)[0]
+        ?.text || ""
+    ).length > 42
+      ? "..."
+      : ""}
+  </div>
+
+  {/* right side */}
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
+      flexShrink: 0,
+    }}
+  >
+    {/* unread indicator */}
+    {selectedChat !==
+  chatName &&
+  unreadChats[
     chatName
-  ]?.slice(-1)[0]
-    ?.text || ""
-).length > 42
-          ? "..."
-          : ""}
+  ] > 0 && (
+    <div
+      style={{
+        minWidth: 18,
+        height: 18,
+        borderRadius: 999,
+        background:
+          "#39FF88",
+        color: "#000",
+        fontSize: 11,
+        fontWeight: 800,
+        display: "flex",
+        justifyContent:
+          "center",
+        alignItems:
+          "center",
+        padding:
+          "0 6px",
+      }}
+    >
+      {
+        unreadChats[
+          chatName
+        ]
+      }
+    </div>
+)}
+
+    <div
+      style={{
+        color: "#666",
+        fontSize: 11,
+      }}
+    >
+      {
+        messagesByChat[chatName]
+          ?.slice(-1)[0]
+          ?.time
+      }
+    </div>
+  </div>
       </div>
     </div>
   ))}
 </div>
 
 </section>
+)}
 
-{/* RIGHT SIDE */}
+{(!isMobile || selectedChat) && (
 <section
   style={{
     flex: 1,
@@ -1368,51 +1842,131 @@ transform:
 >
           {!selectedChat ? (
             <div
-              style={{
-                flex: 1,
-                display: "flex",
-                justifyContent:
-                  "center",
-                alignItems:
-                  "center",
-                color: "#777",
-                fontSize: 18,
-              }}
-            >
-              Select a conversation
-            </div>
+  style={{
+    flex: 1,
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    flexDirection: "column",
+    textAlign: "center",
+    padding: 40,
+  }}
+>
+  <div
+    style={{
+      width: 90,
+      height: 90,
+      borderRadius: "50%",
+      background:
+        "linear-gradient(145deg,#151520,#0D0D14)",
+      border:
+        "1px solid #222",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      fontSize: 38,
+      marginBottom: 24,
+      boxShadow:
+        "0 12px 30px rgba(0,0,0,.35)",
+    }}
+  >
+    💬
+  </div>
+
+  <h2
+    style={{
+      fontSize: 28,
+      fontWeight: 800,
+      marginBottom: 12,
+      color: "#fff",
+    }}
+  >
+    Your conversations live here
+  </h2>
+
+  <p
+    style={{
+      maxWidth: 420,
+      lineHeight: 1.7,
+      color: "#8A8A94",
+      fontSize: 16,
+    }}
+  >
+    Sometimes all it takes is one
+    message to make someone feel
+    seen.
+    <br />
+    Start a conversation when
+    you're ready.
+  </p>
+</div>
           ) : (
             <>
               {/* CHAT HEADER */}
               <div
-                style={{
-                  height: 72,
-                  borderBottom:
-                    "1px solid #222",
-                  display: "flex",
-                  alignItems:
-                    "center",
-                  padding:
-                    "0 24px",
-                  fontWeight: 700,
-                  fontSize: 18,
-                }}
-              >
-                {
-selectedChat?.startsWith(
-  "🏠"
-) ||
-selectedChat?.startsWith(
-  "👥"
-)
-  ? selectedChat
-  : `@${selectedChat}`
-}
-              </div>
+  style={{
+    height: 72,
+    borderBottom:
+      "1px solid #222",
+    display: "flex",
+    alignItems: "center",
+    padding: "0 24px",
+    fontWeight: 700,
+    fontSize: 18,
+    gap: 12,
+  }}
+>
+  {isMobile && (
+    <button
+      onClick={() =>
+        setSelectedChat(null)
+      }
+      style={{
+        background: "none",
+        border: "none",
+        color: "#39FF88",
+        fontSize: 20,
+        cursor: "pointer",
+      }}
+    >
+      ←
+    </button>
+  )}
+
+  {
+    selectedChat?.startsWith("🏠") ||
+    selectedChat?.startsWith("👥")
+      ? selectedChat
+      : `@${selectedChat}`
+  }
+</div>
 
               {/* CHAT AREA */}
-               <div
+<div
   ref={chatContainerRef}
+
+  onScroll={() => {
+    if (
+      !chatContainerRef.current
+    )
+      return;
+
+    const container =
+      chatContainerRef.current;
+
+    const distanceFromBottom =
+      container.scrollHeight -
+      container.scrollTop -
+      container.clientHeight;
+
+    shouldAutoScrollRef.current =
+      distanceFromBottom < 120;
+
+setShowScrollBottom(
+  distanceFromBottom > 300
+);
+  }}
+
   style={{
     flex: 1,
     padding: 24,
@@ -1462,284 +2016,120 @@ requestStatusByChat[
     to reply.
       </div>
     )}
-                  <div
-                    style={{
-                      width:
-                        "100%",
-                      display:
-                        "flex",
-                      flexDirection:
-                        "column",
-                      gap: 12,
-                    }}
-                  >
-                    {selectedChat &&
-  messagesByChat[
-    selectedChat
-  ]?.map(
-                      (
-                        message,
-                        index
-                      ) => (
-                        <div
-                          key={
-                            index
-                          }
-                          style={{
-                            alignSelf:
-  message?.sender ===
-  "me"
-    ? "flex-end"
-    : "flex-start",
-
-background:
-  message?.sender ===
-  "me"
-    ? "#39FF88"
-    : "#181820",
-
-color:
-  message?.sender ===
-  "me"
-    ? "#000"
-    : "#fff",
-
-                            padding:
-                              "12px 16px",
-
-                            borderRadius:
-                              18,
-
-                            maxWidth:
-                              320,
-                          }}
-                        >
-                          {
-                            typeof message ===
-"string"
-  ? message
-  : message?.text
-                          }
-                        </div>
-                      )
-                )}
-              </div>
+<div
+  style={{
+    width: "100%",
+    display: "flex",
+    flexDirection: "column",
+    gap: 12,
+  }}
+>
+  {selectedChat &&
+    messagesByChat[
+      selectedChat
+    ]?.map(
+      (
+        message,
+        index
+      ) => (
+        <MessageBubble
+          key={index}
+          sender={
+            message.sender
+          }
+          text={message.text}
+          time={message.time}
+          status={
+            message.status
+          }
+        />
+      )
+    )}
+</div>
 
 </div>
 
+{showScrollBottom && (
+  <button
+    onClick={() => {
+      if (
+        chatContainerRef.current
+      ) {
+        chatContainerRef.current.scrollTo({
+          top:
+            chatContainerRef.current
+              .scrollHeight,
+          behavior:
+            "smooth",
+        });
+
+        shouldAutoScrollRef.current =
+          true;
+
+setShowScrollBottom(false);
+      }
+    }}
+    style={{
+      position: "absolute",
+      bottom: 110,
+      right: 24,
+
+      width: 52,
+      height: 52,
+
+      borderRadius: "50%",
+
+      border:
+        "1px solid #2A2A35",
+
+      background:
+        "#181820",
+
+      color: "#39FF88",
+
+      fontSize: 22,
+
+      cursor: "pointer",
+
+      zIndex: 1000,
+
+      boxShadow:
+        "0 10px 30px rgba(0,0,0,.45)",
+    }}
+  >
+    ↓
+  </button>
+)}
+
               {/* INPUT */}
-<div
-  style={{
-    borderTop:
-      "1px solid #222",
-    padding: 16,
-paddingBottom: 20,
-    display: "flex",
-    gap: 12,
-    background:
-      "#0F0F14",
-    flexShrink: 0,
-    minHeight: 88,
-  }}
->
-                <input
-  id="message-input"
-  name="messageInput"
-  value={messageText}
-
-  disabled={
-  selectedChat &&
-  requestStatusByChat[
+<MessageInput
+  selectedChat={
     selectedChat
-  ] === false &&
-  (
-    messagesByChat[
-      selectedChat
-    ]?.filter(
-      (m) =>
-        m.sender ===
-        "me"
-    ).length || 0
-  ) > 0
-}
-
-    onChange={(e) =>
-    setMessageText(
-      e.target.value
-    )
   }
-
-                  placeholder={
-  selectedChat &&
-  requestStatusByChat[
-    selectedChat
-  ] === false
-    ? "Send message request..."
-    : "Type a message..."
-}
-                  style={{
-                    flex: 1,
-                    padding: 14,
-                    borderRadius:
-                      18,
-                    border:
-                      "1px solid #222",
-                    background:
-                      "#111",
-                    color:
-                      "#fff",
-                    outline:
-                      "none",
-                  }}
-                />
-
-                <button
-                  onClick={() => {
-  if (
-    !messageText.trim()
-  )
-    return;
-
-  // PRIVATE ACCOUNT REQUEST
-if (
-  chatAccess ===
-    "request" &&
-  selectedChat &&
-  requestStatusByChat[
-    selectedChat
-  ] === false &&
-  (
-    messagesByChat[
-      selectedChat
-    ]?.filter(
-      (m) =>
-        m.sender ===
-        "me"
-    ).length || 0
-  ) === 0
-) {
-  setRequestStatusByChat(
-  (prev) => ({
-    ...prev,
-    [selectedChat!]:
-      false,
-  })
-);
-
-    setMessagesByChat(
-  (prev) => ({
-    ...prev,
-    [selectedChat!]: [
-  ...(prev[
-    selectedChat!
-  ] || []),
-
-  {
-    sender: "me",
-    text:
-      messageText,
-    time:
-      new Date()
-        .toLocaleTimeString(
-          [],
-          {
-            hour:
-              "numeric",
-            minute:
-              "2-digit",
-          }
-        ),
-  },
-],
-  })
-);
-
-setChatActivity(
-  (prev) => ({
-    ...prev,
-    [selectedChat!]:
-      Date.now(),
-  })
-);
-
-    setMessageText("");
-
-    return;
+  requestStatusByChat={
+    requestStatusByChat
   }
-
-  // NORMAL CHAT
-  if (
-    chatAccess ===
-    "open"
-  ) {
-    setMessagesByChat(
-  (prev) => ({
-    ...prev,
-    [selectedChat!]: [
-  ...(prev[
-    selectedChat!
-  ] || []),
-
-  {
-    sender: "me",
-    text:
-      messageText,
-    time:
-      new Date()
-        .toLocaleTimeString(
-          [],
-          {
-            hour:
-              "numeric",
-            minute:
-              "2-digit",
-          }
-        ),
-  },
-],
-  })
-);
-
-setChatActivity(
-  (prev) => ({
-    ...prev,
-    [selectedChat!]:
-      Date.now(),
-  })
-);
-
-    setMessageText("");
+  messagesByChat={
+    messagesByChat
   }
-}}
-                  style={{
-                    padding:
-                      "12px 20px",
-                    borderRadius:
-                      18,
-                    border:
-                      "none",
-                    background:
-                      "#39FF88",
-                    color:
-                      "#000",
-                    fontWeight: 700,
-                    cursor:
-                      "pointer",
-                  }}
-                >
-                  {
-  selectedChat &&
-  requestStatusByChat[
-    selectedChat
-  ] === false
-    ? "Request"
-    : "Message"
-}
-                </button>
-              </div>
+  chatAccess={
+    chatAccess
+  }
+  messageText={
+    messageText
+  }
+  setMessageText={
+    setMessageText
+  }
+  onSend={
+    handleSendMessage
+  }
+/>
             </>
           )}
         </section>
+      )}
+
       </div>
     </main>
   );
