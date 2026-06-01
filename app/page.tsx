@@ -59,6 +59,7 @@ export default function Page() {
   const [user, setUser] = useState<User | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
 
 const [role, setRole] = useState("");
 
@@ -180,6 +181,25 @@ useEffect(() => {
   useEffect(() => {
   loadPosts();
 }, [user]);
+
+useEffect(() => {
+  const checkMobile = () => {
+    setIsMobile(window.innerWidth < 768);
+  };
+
+  checkMobile();
+
+  window.addEventListener(
+    "resize",
+    checkMobile
+  );
+
+  return () =>
+    window.removeEventListener(
+      "resize",
+      checkMobile
+    );
+}, []);
 
   /* ================= CREATE POST ================= */
 
@@ -360,7 +380,15 @@ if (!user) {
   return (
     <main style={styles.app}>
       {/* HEADER */}
-      <header style={styles.header}>
+      <header
+  style={{
+    ...styles.header,
+    flexDirection: isMobile
+      ? "column"
+      : "row",
+    gap: isMobile ? 12 : 0,
+  }}
+>
         <div style={styles.left}>
           <div style={styles.logo}>
             <Command size={16} />
@@ -419,7 +447,12 @@ if (!user) {
           Platform Core
         </div>
 
-        <h2 style={styles.heroTitle}>
+        <h2
+  style={{
+    ...styles.heroTitle,
+    fontSize: isMobile ? 26 : 34,
+  }}
+>
           Express the Shadow.
           <br />
           Share the Smile.
@@ -482,21 +515,35 @@ if (!user) {
 
       {/* CREATE POST */}
       {user && (
-        <section style={styles.createBox}>
+        <section
+  style={{
+    ...styles.createBox,
+    margin: isMobile
+      ? "0 12px 24px"
+      : "0 auto 24px",
+    padding: isMobile ? 16 : 20,
+  }}
+>
           {mode === "structured" ? (
             <>
               <input
                 placeholder="Shadow thought..."
                 value={shadow}
                 onChange={(e) => setShadow(e.target.value)}
-                style={styles.input}
+                style={{
+  ...styles.input,
+  padding: isMobile ? 12 : 16,
+}}
               />
 
               <input
                 placeholder="What helped?"
                 value={smile}
                 onChange={(e) => setSmile(e.target.value)}
-                style={styles.input}
+                style={{
+  ...styles.input,
+  padding: isMobile ? 12 : 16,
+}}
               />
             </>
           ) : (
@@ -504,7 +551,10 @@ if (!user) {
               placeholder="What's on your mind?"
               value={text}
               onChange={(e) => setText(e.target.value)}
-              style={styles.input}
+              style={{
+  ...styles.input,
+  padding: isMobile ? 12 : 16,
+}}
             />
           )}
 
@@ -541,7 +591,12 @@ if (!user) {
       )}
 
       {/* FEED */}
-      <section style={styles.feed}>
+      <section
+  style={{
+    ...styles.feed,
+    padding: isMobile ? 12 : 16,
+  }}
+>
   {posts.length === 0 && (
     <div
       style={{
@@ -559,7 +614,10 @@ if (!user) {
   {posts.map((p) => (
   <div
     key={p.id}
-    style={styles.card}
+    style={{
+  ...styles.card,
+  padding: isMobile ? 14 : 18,
+}}
   >
          {!p.is_anonymous &&
   p.user_id && (
@@ -588,6 +646,8 @@ if (!user) {
   }
   style={{
     cursor: "pointer",
+    overflowWrap: "anywhere",
+    wordBreak: "break-word",
   }}
 >
   {p.post_type === "flip" ? (
@@ -699,7 +759,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
 
   left: { display: "flex", gap: 10, alignItems: "center" },
-  right: { display: "flex", gap: 10, alignItems: "center" },
+  right: { display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" },
 
   logo: {
     width: 34,
@@ -779,6 +839,7 @@ const styles: Record<string, React.CSSProperties> = {
 
   toggleRow: {
     display: "flex",
+    flexWrap: "wrap",
     gap: 12,
     marginTop: 20,
     justifyContent: "center",
@@ -810,6 +871,7 @@ const styles: Record<string, React.CSSProperties> = {
 
   input: {
     width: "100%",
+    boxSizing: "border-box",
     padding: 16,
     marginBottom: 12,
     borderRadius: 18,
@@ -852,6 +914,7 @@ const styles: Record<string, React.CSSProperties> = {
 
   actions: {
     display: "flex",
+    flexWrap: "wrap",
     gap: 10,
     marginTop: 10,
   },
@@ -867,11 +930,13 @@ const styles: Record<string, React.CSSProperties> = {
 
   commentBox: {
     display: "flex",
+    flexWrap: "wrap",
     gap: 10,
     marginTop: 10,
   },
 
   commentInput: {
+    boxSizing: "border-box",
     flex: 1,
     padding: 8,
     borderRadius: 8,
