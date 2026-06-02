@@ -949,6 +949,7 @@ if (!user) {
   }}
 >
       {/* HEADER */}
+      {!isMobile && (
       <header
         style={{
           height: 72,
@@ -999,6 +1000,7 @@ if (!user) {
           Settings
         </button>
       </header>
+      )}
 
       {/* BODY */}
 <div
@@ -1021,9 +1023,12 @@ if (!user) {
         {(!isMobile || !selectedChat) && (
 <section
   style={{
-    width: 340,
+    width: isMobile ? "100%" : 340,
+    
     borderRight:
-      "1px solid #222",
+  isMobile
+    ? "none"
+    : "1px solid #222",
 
     padding: 20,
 
@@ -1044,6 +1049,40 @@ if (!user) {
     minHeight: 0,
   }}
 >
+
+{isMobile && (
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 16,
+    }}
+  >
+    <h2
+      style={{
+        margin: 0,
+        fontSize: 24,
+        fontWeight: 800,
+      }}
+    >
+      Messages
+    </h2>
+
+    <button
+      style={{
+        background: "transparent",
+        border: "none",
+        color: "#fff",
+        fontSize: 22,
+        cursor: "pointer",
+      }}
+    >
+      ⚙️
+    </button>
+  </div>
+)}
+
           <input
   id="search-messages"
   name="searchMessages"
@@ -1225,11 +1264,11 @@ if (!user) {
               style={{
                 color: "#888",
                 fontSize: 14,
-              }}
-            >
-              No requests
-            </div>
-          </div>
+    }}
+  >
+    No requests
+  </div>
+</div>
 
           {/* CONVERSATIONS */}
 <div

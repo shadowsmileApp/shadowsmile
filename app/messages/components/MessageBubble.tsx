@@ -37,7 +37,15 @@ export default function MessageBubble({
       }}
     >
       <div>
-        <div>{text}</div>
+        <div
+  style={{
+    wordBreak: "break-word",
+    overflowWrap: "anywhere",
+    whiteSpace: "pre-wrap",
+  }}
+>
+  {text}
+</div>
 
         <div
           style={{
