@@ -1,7 +1,9 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import BottomNav from "./BottomNav";
+
 
 export default function LayoutShell({
   children,
@@ -10,9 +12,36 @@ export default function LayoutShell({
 }) {
   const pathname = usePathname();
 
+  const [hideMessagesNav, setHideMessagesNav] =
+  useState(false);
+
+  useEffect(() => {
+  const check = () => {
+    setHideMessagesNav(
+      document.body.classList.contains(
+        "messages-chat-open"
+      )
+    );
+  };
+
+  check();
+
+  const observer =
+    new MutationObserver(check);
+
+  observer.observe(document.body, {
+    attributes: true,
+    attributeFilter: ["class"],
+  });
+
+  return () =>
+    observer.disconnect();
+}, []);
+
   const hideNav =
     pathname === "/signin" ||
-    pathname === "/reset-password";
+    pathname === "/reset-password" ||
+    hideMessagesNav;
 
   return (
     <>

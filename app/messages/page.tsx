@@ -350,6 +350,31 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
+  if (!isMobile) {
+    document.body.classList.remove(
+      "messages-chat-open"
+    );
+    return;
+  }
+
+  if (selectedChat) {
+    document.body.classList.add(
+      "messages-chat-open"
+    );
+  } else {
+    document.body.classList.remove(
+      "messages-chat-open"
+    );
+  }
+
+  return () => {
+    document.body.classList.remove(
+      "messages-chat-open"
+    );
+  };
+}, [selectedChat, isMobile]);
+
+useEffect(() => {
   const savedMessages =
     localStorage.getItem(
       "shadowsmile_messages"
