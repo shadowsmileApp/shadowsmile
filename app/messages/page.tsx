@@ -102,6 +102,10 @@ const [showScrollBottom,
   setShowScrollBottom] =
 useState(false);
 
+const [messagesLoaded,
+  setMessagesLoaded] =
+useState(false);
+
   const [messagesByChat,
   setMessagesByChat] =
 useState<
@@ -538,7 +542,7 @@ useEffect(() => {
     initialLoadDoneRef.current =
       false;
 
-    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         if (
           chatContainerRef.current
@@ -550,6 +554,8 @@ useEffect(() => {
       });
     });
   }
+
+  setMessagesLoaded(true);
 }, []);
 
 useEffect(() => {
@@ -590,13 +596,19 @@ behavior: "smooth",
 }, [messagesByChat]);
 
 useEffect(() => {
+  if (!messagesLoaded)
+    return;
+
   localStorage.setItem(
     "shadowsmile_messages",
     JSON.stringify(
       messagesByChat
     )
   );
-}, [messagesByChat]);
+}, [
+  messagesByChat,
+  messagesLoaded,
+]);
 
 useEffect(() => {
   localStorage.setItem(
