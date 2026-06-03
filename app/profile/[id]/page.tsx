@@ -72,6 +72,9 @@ const [isMobile, setIsMobile] =
 const [editing, setEditing] =
   useState(false);
 
+const [bioExpanded, setBioExpanded] =
+  useState(false);
+
 const [editName, setEditName] =
   useState("");
 
@@ -574,9 +577,12 @@ if (!currentUser) {
   return (
     <main
   style={{
-    ...styles.page,
-    padding: isMobile ? 12 : 20,
-  }}
+  ...styles.page,
+  paddingTop: isMobile ? 12 : 20,
+  paddingLeft: isMobile ? 12 : 20,
+  paddingRight: isMobile ? 12 : 20,
+  paddingBottom: 120,
+}}
 >
 
       {/* PROFILE HEADER V2 */}
@@ -586,6 +592,251 @@ if (!currentUser) {
     padding: isMobile ? 16 : 28,
   }}
 >
+{isMobile ? (
+<>
+  <div
+    style={{
+      display: "flex",
+      gap: 16,
+      alignItems: "flex-start",
+    }}
+  >
+
+    {/* Avatar */}
+
+    <div
+      style={{
+        width: 90,
+        height: 90,
+        borderRadius: 12,
+        overflow: "hidden",
+        position: "relative",
+        flexShrink: 0,
+        background:
+          "linear-gradient(135deg,#7B2FFF,#39FF88)",
+      }}
+    >
+      {profile?.avatar_url ? (
+        <Image
+          src={profile.avatar_url}
+          alt="avatar"
+          fill
+          unoptimized
+          style={{
+            objectFit: "cover",
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontWeight: 800,
+            fontSize: 28,
+          }}
+        >
+          {displayHandle
+            .charAt(1)
+            .toUpperCase()}
+        </div>
+      )}
+    </div>
+
+    {/* Right Side */}
+
+    <div
+      style={{
+        flex: 1,
+      }}
+    >
+
+      <h1
+        style={{
+          margin: 0,
+          fontSize: 22,
+          fontWeight: 800,
+        }}
+      >
+        {displayName}
+      </h1>
+
+      <div
+        style={{
+          color: "#888",
+          marginTop: 4,
+          fontSize: 15,
+        }}
+      >
+        {displayHandle}
+      </div>
+
+<div
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    marginTop: 14,
+    gap: 12,
+  }}
+>
+
+  <button
+    style={{
+      background: "none",
+      border: "none",
+      color: "#fff",
+      padding: 0,
+      cursor: "pointer",
+    }}
+  >
+    <div
+      style={{
+        fontWeight: 800,
+        fontSize: 18,
+      }}
+    >
+      {socialStats.followers}
+    </div>
+
+    <div
+      style={{
+        fontSize: 12,
+        color: "#888",
+      }}
+    >
+      Shadows
+    </div>
+  </button>
+
+  <div>
+    <div
+      style={{
+        fontWeight: 800,
+        fontSize: 18,
+        textAlign: "center",
+      }}
+    >
+      {stats.postCount}
+    </div>
+
+    <div
+      style={{
+        fontSize: 12,
+        color: "#888",
+      }}
+    >
+      Posts
+    </div>
+  </div>
+
+  <button
+    style={{
+      background: "none",
+      border: "none",
+      color: "#fff",
+      padding: 0,
+      cursor: "pointer",
+    }}
+  >
+    <div
+      style={{
+        fontWeight: 800,
+        fontSize: 18,
+      }}
+    >
+      {socialStats.following}
+    </div>
+
+    <div
+      style={{
+        fontSize: 12,
+        color: "#888",
+      }}
+    >
+      Smiles
+    </div>
+  </button>
+
+</div>
+
+    </div>
+
+  </div>
+
+{/* MOBILE BIO */}
+
+<div
+  style={{
+    marginTop: 16,
+    border: "1px solid #25252D",
+    borderRadius: 16,
+    padding: 14,
+    background: "#15151A",
+  }}
+>
+  <p
+    style={{
+      margin: 0,
+      color: "#C9C9D1",
+      lineHeight: 1.6,
+      display: "-webkit-box",
+      WebkitBoxOrient: "vertical",
+      WebkitLineClamp:
+        !bioExpanded ? 3 : "unset",
+      overflow: "hidden",
+    }}
+  >
+    {profileBio}
+  </p>
+
+  {profileBio.length > 120 && (
+    <button
+      style={styles.bioExpandBtn}
+      onClick={() =>
+        setBioExpanded(!bioExpanded)
+      }
+    >
+      {bioExpanded
+        ? "Show Less"
+        : "Read More"}
+    </button>
+  )}
+</div>
+<div style={styles.mobileMetaRow}>
+
+  <div style={styles.mobileMetaItem}>
+    Member since{" "}
+    {profile?.created_at
+      ? new Date(
+          profile.created_at
+        ).toLocaleDateString()
+      : "Unknown"}
+  </div>
+
+  {["admin", "founder"].includes(
+    profile?.role || ""
+  ) && (
+    <div style={styles.mobileMetaItem}>
+      Founder
+    </div>
+  )}
+
+  {isOwnProfile && (
+    <button
+      style={styles.mobileSettingsBtn}
+      onClick={() =>
+        router.push("/settings")
+      }
+    >
+      <Settings size={18} />
+    </button>
+  )}
+
+</div>
+</>
+) : (
   <div
   style={{
     ...styles.profileGrid,
@@ -723,9 +974,7 @@ if (!currentUser) {
   style={{
     ...styles.counterBar,
     gridTemplateColumns:
-      isMobile
-        ? "1fr"
-        : "repeat(3,1fr)",
+      "repeat(3,1fr)",
   }}
 >
   <button style={styles.counterCard}>
@@ -760,13 +1009,72 @@ if (!currentUser) {
 </div>
 
       {/* BIO */}
-      {!editing && (
-        <div style={styles.bioCard}>
-          <p style={styles.bio}>
-            {profileBio}
-          </p>
-        </div>
-      )}
+{!editing && (
+  <div style={styles.bioCard}>
+  <p
+  style={{
+    ...styles.bio,
+    display: "-webkit-box",
+    WebkitBoxOrient: "vertical",
+    WebkitLineClamp:
+      !bioExpanded && isMobile
+        ? 3
+        : "unset",
+    overflow: "hidden",
+  }}
+>
+  {profileBio}
+</p>
+
+    {profileBio.length > 120 && (
+      <button
+        style={styles.bioExpandBtn}
+        onClick={() =>
+          setBioExpanded(
+            !bioExpanded
+          )
+        }
+      >
+        {bioExpanded
+          ? "Show Less"
+          : "Read More"}
+      </button>
+    )}
+  </div>
+)}
+
+{isMobile && (
+  <div style={styles.mobileMetaRow}>
+
+    <div style={styles.mobileMetaItem}>
+  Member since{" "}
+  {profile?.created_at
+    ? new Date(
+        profile.created_at
+      ).toLocaleDateString()
+    : "Unknown"}
+</div>
+
+    {["admin", "founder"].includes(
+  profile?.role || ""
+) && (
+  <div style={styles.mobileMetaItem}>
+    Founder
+  </div>
+)}
+
+    {isOwnProfile && (
+      <button
+        style={styles.mobileSettingsBtn}
+        onClick={() =>
+          router.push("/settings")
+        }
+      >
+        <Settings size={18} />
+      </button>
+    )}
+  </div>
+)}
 
       {/* EDIT PROFILE */}
       {isOwnProfile && !editing && (
@@ -875,10 +1183,11 @@ if (!currentUser) {
                 : "Save"}
             </button>
           </div>
-        </div>
+                </div>
       )}
     </div>
   </div>
+)}
 </section>
 
       {/* POSTS */}
@@ -957,8 +1266,12 @@ const styles: Record<string, React.CSSProperties> = {
   background:
     "linear-gradient(180deg,#0A0A0F,#0E0E14)",
   color: "#EAEAF0",
-  padding: 20,
+
+  paddingTop: 20,
+  paddingLeft: 20,
+  paddingRight: 20,
   paddingBottom: 120,
+
   fontFamily: "system-ui",
 },
 
@@ -1122,6 +1435,16 @@ bio: {
   overflowWrap: "anywhere",
 },
 
+bioExpandBtn: {
+  background: "transparent",
+  border: "none",
+  color: "#7B2FFF",
+  fontWeight: 700,
+  cursor: "pointer",
+  marginTop: 8,
+  padding: 0,
+},
+
   memberSince: {
   color: "#888",
   marginTop: 8,
@@ -1218,6 +1541,30 @@ saveButton: {
     gap: 10,
     marginTop: 14,
   },
+
+mobileMetaRow: {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginTop: 12,
+  paddingTop: 12,
+  borderTop: "1px solid #25252D",
+},
+
+mobileMetaItem: {
+  fontSize: 12,
+  color: "#888",
+},
+
+mobileSettingsBtn: {
+  background: "transparent",
+  border: "none",
+  color: "#999",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+},
 
   actionBtn: {
     background: "#1A1A1A",

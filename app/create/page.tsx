@@ -18,6 +18,9 @@ export default function CreatePage() {
   const [smile, setSmile] = useState("");
   const [text, setText] = useState("");
 
+const [isAnonymous, setIsAnonymous] =
+  useState(false);
+
   const [loading, setLoading] = useState(true);
 
   /* ================= LOAD USER ================= */
@@ -89,18 +92,20 @@ useEffect(() => {
     const payload =
       mode === "structured"
         ? {
-            user_id: user.id,
-            post_type: "flip",
-            shadow_text: shadow,
-            smile_text: smile,
-            content: null,
-          }
+  user_id: user.id,
+  post_type: "flip",
+  shadow_text: shadow,
+  smile_text: smile,
+  content: null,
+  is_anonymous: isAnonymous,
+}
         : {
             user_id: user.id,
             post_type: "normal",
             content: text,
             shadow_text: null,
             smile_text: null,
+            is_anonymous: isAnonymous,
           };
 
     const { error } = await supabase.from("posts").insert(payload);
@@ -117,6 +122,7 @@ useEffect(() => {
     setShadow("");
     setSmile("");
     setText("");
+    setIsAnonymous(false);
 
     // go back to feed
     router.push("/");
@@ -188,6 +194,31 @@ if (loading) {
         )}
 
         {/* BUTTON */}
+<div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 10,
+  }}
+>
+  <input
+    type="checkbox"
+    checked={isAnonymous}
+    onChange={(e) =>
+      setIsAnonymous(e.target.checked)
+    }
+  />
+
+  <span
+    style={{
+      color: "#aaa",
+      fontSize: 14,
+    }}
+  >
+    Post anonymously
+  </span>
+</div>
         <button onClick={createPost} style={styles.button}>
           {loading ? "Posting..." : "Post"}
         </button>

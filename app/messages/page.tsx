@@ -515,11 +515,21 @@ useEffect(() => {
     );
   }
 
-  // RESTORE SELECTED CHAT
-  if (savedSelectedChat) {
-    setSelectedChat(
-      savedSelectedChat
-    );
+  const parsedMessages =
+  savedMessages
+    ? JSON.parse(savedMessages)
+    : {};
+
+if (
+  savedSelectedChat &&
+  parsedMessages[
+    savedSelectedChat
+  ]
+) {
+  setSelectedChat(
+    savedSelectedChat
+  );
+}
 
     const parsedRequests =
       savedRequests
@@ -553,7 +563,6 @@ useEffect(() => {
         }
       });
     });
-  }
 
   setMessagesLoaded(true);
 }, []);
