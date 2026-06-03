@@ -1990,16 +1990,16 @@ transform:
               {/* CHAT HEADER */}
               <div
   style={{
-    height: 72,
-    borderBottom:
-      "1px solid #222",
-    display: "flex",
-    alignItems: "center",
-    padding: "0 24px",
-    fontWeight: 700,
-    fontSize: 18,
-    gap: 12,
-  }}
+  height: 72,
+  borderBottom: "1px solid #222",
+  display: "flex",
+  alignItems: "center",
+  padding: "0 24px",
+  fontWeight: 700,
+  fontSize: 18,
+  gap: 12,
+  overflow: "hidden",
+}}
 >
   {isMobile && (
     <button
@@ -2018,12 +2018,22 @@ transform:
     </button>
   )}
 
+  <span
+  style={{
+    flex: 1,
+    minWidth: 0,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  }}
+>
   {
     selectedChat?.startsWith("🏠") ||
     selectedChat?.startsWith("👥")
       ? selectedChat
       : `@${selectedChat}`
   }
+</span>
 </div>
 
               {/* CHAT AREA */}

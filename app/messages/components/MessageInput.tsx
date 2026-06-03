@@ -52,6 +52,9 @@ export default function MessageInput({
 
         paddingBottom: 20,
 
+        width: "100%",
+        overflow: "hidden",
+
         display: "flex",
 
         gap: 12,
@@ -98,6 +101,7 @@ export default function MessageInput({
         }
         style={{
           flex: 1,
+          minWidth: 0,
           padding: 14,
           borderRadius: 18,
           border:
