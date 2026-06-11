@@ -21,6 +21,21 @@ export default function SignInPage() {
   const [handle, setHandle] =
     useState("");
 
+  const [firstName, setFirstName] =
+  useState("");
+
+const [lastName, setLastName] =
+  useState("");
+
+const [dateOfBirth, setDateOfBirth] =
+  useState("");
+
+const [phoneNumber, setPhoneNumber] =
+  useState("");
+
+const [confirmPassword, setConfirmPassword] =
+  useState("");
+
   const [loading, setLoading] =
     useState(false);
 
@@ -77,6 +92,93 @@ export default function SignInPage() {
 
       if (mode === "signup") {
 
+if (password !== confirmPassword) {
+  alert("Passwords do not match.");
+  return;
+}
+
+  const dobParts =
+  dateOfBirth.split("/");
+
+if (dobParts.length !== 3) {
+  alert(
+    "Use MM/DD/YYYY format."
+  );
+  return;
+}
+
+const birthDate =
+  new Date(
+    Number(dobParts[2]),
+    Number(dobParts[0]) - 1,
+    Number(dobParts[1])
+  );
+
+if (
+  isNaN(birthDate.getTime())
+) {
+  alert(
+    "Please enter a valid date."
+  );
+  return;
+}
+
+const today = new Date();
+
+let age =
+  today.getFullYear() -
+  birthDate.getFullYear();
+
+const monthDiff =
+  today.getMonth() -
+  birthDate.getMonth();
+
+if (
+  monthDiff < 0 ||
+  (
+    monthDiff === 0 &&
+    today.getDate() <
+      birthDate.getDate()
+  )
+) {
+  age--;
+}
+
+if (age < 13) {
+  alert(
+    "You must be at least 13 years old."
+  );
+  return;
+}
+
+if (
+  !firstName.trim() ||
+  !lastName.trim() ||
+  !dateOfBirth
+) {
+  alert(
+    "Please complete all required fields."
+  );
+  return;
+}
+
+if (
+  phoneNumber &&
+  !/^[0-9()+ -]+$/.test(phoneNumber)
+) {
+  alert(
+    "Please enter a valid phone number."
+  );
+  return;
+}
+
+if (!email && !phoneNumber) {
+  alert(
+    "Please enter an email address or phone number."
+  );
+  return;
+}
+
 const trimmedHandle =
     handle.trim().toLowerCase();
 
@@ -102,10 +204,12 @@ const trimmedHandle =
             email,
             password,
             options: {
-              data: {
-                handle,
-              },
-            },
+  data: {
+    handle: handle.trim().toLowerCase(),
+    first_name: firstName.trim(),
+    last_name: lastName.trim(),
+  },
+},
           });
 
         if (error) {
@@ -115,23 +219,41 @@ const trimmedHandle =
 
         if (data.user) {
   const profilePayload = {
-    id: data.user.id,
-    handle: handle.trim(),
-    display_name: handle.trim(),
-    bio: "",
-    role: "user",
-  };
+  id: data.user.id,
+
+  handle: handle.trim().toLowerCase(),
+
+  display_name:
+    `${firstName.trim()} ${lastName.trim()}`,
+
+  first_name:
+    firstName.trim(),
+
+  last_name:
+    lastName.trim(),
+
+  date_of_birth:
+    dateOfBirth,
+
+  phone_number:
+    phoneNumber.trim() || null,
+
+  bio: "",
+
+  role: "user",
+};
 
   // First attempt
   let { error: profileError } =
     await supabase
       .from("profiles")
-      .insert(profilePayload);
+      .update(profilePayload)
+.eq("id", data.user.id);
 
   // Quiet repair attempt
   if (profileError) {
     console.warn(
-      "Profile insert failed, retrying...",
+      "Profile update failed, retrying...",
       profileError
     );
 
@@ -144,7 +266,8 @@ const trimmedHandle =
     const retry =
       await supabase
         .from("profiles")
-        .insert(profilePayload);
+        .update(profilePayload)
+.eq("id", data.user.id);
 
     profileError = retry.error;
   }
@@ -160,12 +283,9 @@ const trimmedHandle =
 }
 
 
-        alert(
-          "Account created! Sign in to continue."
-        );
+        router.push("/onboarding");
+return;
 
-        setMode("signin");
-        setPassword("");
       } else {
         const { error } =
           await supabase.auth.signInWithPassword(
@@ -255,27 +375,63 @@ const trimmedHandle =
 
         {/* Handle for signup */}
         {mode === "signup" && (
-          <input
-            id="handle"
-            name="handle"
-            autoComplete="username"
-            placeholder="Choose a username"
-            value={handle}
-            onChange={(e) =>
-              setHandle(
-                e.target.value
-              )
-            }
-            className="w-full p-3 rounded-xl bg-white/10 border border-white/10 text-white mb-3 outline-none"
-          />
-        )}
+  <>
+    <input
+      placeholder="First Name"
+      value={firstName}
+      onChange={(e) =>
+        setFirstName(e.target.value)
+      }
+      className="w-full p-3 rounded-xl bg-white/10 border border-white/10 text-white mb-3 outline-none"
+    />
+
+    <input
+      placeholder="Last Name"
+      value={lastName}
+      onChange={(e) =>
+        setLastName(e.target.value)
+      }
+      className="w-full p-3 rounded-xl bg-white/10 border border-white/10 text-white mb-3 outline-none"
+    />
+
+    <input
+  placeholder="Date of Birth (MM/DD/YYYY)"
+  value={dateOfBirth}
+  onChange={(e) =>
+    setDateOfBirth(e.target.value)
+  }
+  className="w-full p-3 rounded-xl bg-white/10 border border-white/10 text-white mb-3 outline-none"
+/>
+
+    <input
+      placeholder="Phone Number (optional)"
+      value={phoneNumber}
+      onChange={(e) =>
+        setPhoneNumber(e.target.value)
+      }
+      className="w-full p-3 rounded-xl bg-white/10 border border-white/10 text-white mb-3 outline-none"
+    />
+
+    <input
+      id="handle"
+      name="handle"
+      autoComplete="username"
+      placeholder="Choose a username"
+      value={handle}
+      onChange={(e) =>
+        setHandle(e.target.value)
+      }
+      className="w-full p-3 rounded-xl bg-white/10 border border-white/10 text-white mb-3 outline-none"
+    />
+  </>
+)}
 
         {/* Email */}
         <input
           id="email"
           name="email"
           autoComplete="email"
-          placeholder="Email"
+          placeholder="Email Address"
           type="email"
           value={email}
           onChange={(e) =>
@@ -305,6 +461,20 @@ const trimmedHandle =
           }
           className="w-full p-3 rounded-xl bg-white/10 border border-white/10 text-white mb-2 outline-none"
         />
+
+{mode === "signup" && (
+  <input
+    placeholder="Confirm Password"
+    type="password"
+    value={confirmPassword}
+    onChange={(e) =>
+      setConfirmPassword(
+        e.target.value
+      )
+    }
+    className="w-full p-3 rounded-xl bg-white/10 border border-white/10 text-white mb-3 outline-none"
+  />
+)}
 
         {/* Forgot Password */}
         <div className="flex justify-end mb-4">
@@ -347,12 +517,20 @@ const trimmedHandle =
         <button
           onClick={submit}
           disabled={
-            loading ||
-            !email ||
-            !password ||
-            (mode === "signup" &&
-              !handle)
-          }
+  loading ||
+  !password ||
+  (
+    mode === "signup" &&
+    (
+      !handle ||
+      !firstName ||
+      !lastName ||
+      !dateOfBirth ||
+      !confirmPassword ||
+      (!email && !phoneNumber)
+    )
+  )
+}
           className="w-full py-3 bg-white text-black font-bold rounded-xl hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading

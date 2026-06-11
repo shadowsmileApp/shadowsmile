@@ -6,7 +6,10 @@ import {
   useRef,
 } from "react";
 
-import { useRouter } from "next/navigation";
+import {
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
 
@@ -58,6 +61,9 @@ useState<string[]>(
 );
 
 const router = useRouter();
+
+const searchParams =
+  useSearchParams();
 
 const [user, setUser] =
   useState<User | null>(null);
@@ -678,6 +684,26 @@ useEffect(() => {
     router.push("/signin");
   }
 }, [loading, user, router]);
+
+useEffect(() => {
+  const userFromUrl =
+    searchParams.get("user");
+
+  if (!userFromUrl) return;
+
+  setSelectedChat(userFromUrl);
+
+  setChatAccess(
+    requestStatusByChat[
+      userFromUrl
+    ] === false
+      ? "request"
+      : "open"
+  );
+}, [
+  searchParams,
+  requestStatusByChat,
+]);
 
 useEffect(() => {
   if (

@@ -69,9 +69,6 @@ const [loading, setLoading] =
 const [isMobile, setIsMobile] =
   useState(false);
 
-const [editing, setEditing] =
-  useState(false);
-
 const [bioExpanded, setBioExpanded] =
   useState(false);
 
@@ -201,6 +198,11 @@ useEffect(() => {
 
     setProfile(data || null);
 
+if (!data) {
+  router.push("/search");
+  return;
+}
+
     setEditName(
       data?.display_name || ""
     );
@@ -221,10 +223,7 @@ const [
       count: "exact",
       head: true,
     })
-    .eq(
-      "following_id",
-      id
-    ),
+    .eq("following_id", id),
 
   supabase
     .from("followers")
@@ -232,18 +231,33 @@ const [
       count: "exact",
       head: true,
     })
-    .eq(
-      "follower_id",
-      id
-    ),
+    .eq("follower_id", id),
 ]);
+
+if (followersResult.error) {
+  console.error(
+    "Followers count error",
+    followersResult.error
+  );
+}
+
+if (followingResult.error) {
+  console.error(
+    "Following count error",
+    followingResult.error
+  );
+}
 
 setSocialStats({
   followers:
-    followersResult.count || 0,
+    followersResult.error
+      ? 0
+      : followersResult.count || 0,
 
   following:
-    followingResult.count || 0,
+    followingResult.error
+      ? 0
+      : followingResult.count || 0,
 });
   }
 
@@ -277,9 +291,15 @@ useEffect(() => {
         .maybeSingle();
 
     if (error) {
-      console.error(error);
-      return;
-    }
+  console.log(
+    "FOLLOW ERROR:",
+    JSON.stringify(error, null, 2)
+  );
+  alert(
+    JSON.stringify(error, null, 2)
+  );
+  return;
+}
 
     setIsFollowing(!!data);
   }
@@ -348,6 +368,12 @@ useEffect(() => {
 /* ================= FOLLOW SYSTEM ================= */
 
 async function toggleFollow() {
+
+  console.log(
+    "TOGGLE FOLLOW CLICKED"
+
+  );
+
   if (
     !currentUser?.id ||
     !profile?.id
@@ -380,9 +406,15 @@ async function toggleFollow() {
           );
 
       if (error) {
-        console.error(error);
-        return;
-      }
+  console.log(
+    "FOLLOW ERROR:",
+    JSON.stringify(error, null, 2)
+  );
+  alert(
+    JSON.stringify(error, null, 2)
+  );
+  return;
+}
 
       setIsFollowing(false);
 
@@ -409,9 +441,17 @@ setSocialStats((prev) => ({
           });
 
       if (error) {
-        console.error(error);
-        return;
-      }
+  console.log(
+    "FOLLOW INSERT ERROR:",
+    JSON.stringify(error, null, 2)
+  );
+
+  alert(
+    JSON.stringify(error, null, 2)
+  );
+
+  return;
+}
 
       setIsFollowing(true);
 
@@ -425,109 +465,6 @@ setSocialStats((prev) => ({
 
   } finally {
     setFollowLoading(false);
-  }
-}
-
-/* ================= SAVE PROFILE ================= */
-
-async function saveProfile() {
-  if (!profile?.id) return;
-
-  try {
-    setSaving(true);
-
-let avatarUrl =
-  profile?.avatar_url || null;
-
-if (avatarFile) {
-  const fileExt =
-    avatarFile.name
-      .split(".")
-      .pop();
-
-  const fileName =
-    `${profile.id}/avatar-${Date.now()}.${fileExt}`;
-
-  const { error: uploadError } =
-    await supabase.storage
-      .from("avatars")
-      .upload(
-        fileName,
-        avatarFile,
-        {
-          upsert: true,
-        }
-      );
-
-  if (uploadError) {
-    console.error(uploadError);
-    alert(
-      "Failed to upload avatar"
-    );
-    return;
-  }
-
-  const {
-    data: publicUrlData,
-  } = supabase.storage
-    .from("avatars")
-    .getPublicUrl(
-      fileName
-    );
-
-  avatarUrl =
-    publicUrlData.publicUrl;
-}
-
-    const { error } =
-      await supabase
-        .from("profiles")
-        .update({
-          display_name:
-            editName.trim(),
-
-          bio:
-            editBio.trim(),
-
-          avatar_url:
-            avatarUrl,
-        })
-        .eq(
-          "id",
-          profile.id
-        );
-
-    if (error) {
-      console.error(error);
-      alert(
-        "Failed to save profile"
-      );
-      return;
-    }
-
-    setProfile((prev) =>
-      prev
-        ? {
-            ...prev,
-            display_name:
-              editName.trim(),
-
-            bio:
-              editBio.trim(),
-
-            avatar_url:
-              avatarUrl,
-          }
-        : prev
-    );
-
-    setAvatarFile(null);
-    setEditing(false);
-
-    alert("Profile updated!");
-
-  } finally {
-    setSaving(false);
   }
 }
 
@@ -683,6 +620,9 @@ if (!currentUser) {
 >
 
   <button
+onClick={() =>
+  alert("Followers list coming soon")
+}
     style={{
       background: "none",
       border: "none",
@@ -710,54 +650,68 @@ if (!currentUser) {
     </div>
   </button>
 
-  <div>
-    <div
-      style={{
-        fontWeight: 800,
-        fontSize: 18,
-        textAlign: "center",
-      }}
-    >
-      {stats.postCount}
-    </div>
-
-    <div
-      style={{
-        fontSize: 12,
-        color: "#888",
-      }}
-    >
-      Posts
-    </div>
-  </div>
-
   <button
+  onClick={() =>
+    alert("Posts are below")
+  }
+  style={{
+    background: "none",
+    border: "none",
+    color: "#fff",
+    padding: 0,
+    cursor: "pointer",
+  }}
+>
+  <div
     style={{
-      background: "none",
-      border: "none",
-      color: "#fff",
-      padding: 0,
-      cursor: "pointer",
+      fontWeight: 800,
+      fontSize: 18,
+      textAlign: "center",
     }}
   >
-    <div
-      style={{
-        fontWeight: 800,
-        fontSize: 18,
-      }}
-    >
-      {socialStats.following}
-    </div>
+    {stats.postCount}
+  </div>
 
-    <div
-      style={{
-        fontSize: 12,
-        color: "#888",
-      }}
-    >
-      Smiles
-    </div>
-  </button>
+  <div
+    style={{
+      fontSize: 12,
+      color: "#888",
+    }}
+  >
+    Posts
+  </div>
+</button>
+
+  <button
+  onClick={() =>
+    alert("Following list coming soon")
+  }
+  style={{
+    background: "none",
+    border: "none",
+    color: "#fff",
+    padding: 0,
+    cursor: "pointer",
+  }}
+>
+  <div
+    style={{
+      fontWeight: 800,
+      fontSize: 18,
+    }}
+  >
+    {socialStats.following}
+  </div>
+
+  <div
+    style={{
+      fontSize: 12,
+      color: "#888",
+    }}
+  >
+    Smiles
+  </div>
+</button>
 
 </div>
 
@@ -890,6 +844,7 @@ if (!currentUser) {
 )}
 
 {!isOwnProfile ? (
+  <>
     <button
       style={{
         ...styles.followBtn,
@@ -909,7 +864,18 @@ if (!currentUser) {
         ? "Connected"
         : "Connect"}
     </button>
-  ) : null}
+
+    <button
+  type="button"
+  style={styles.messageBtn}
+      onClick={() =>
+        router.push(`/messages?user=${profile.handle}`)
+      }
+    >
+      Message User
+    </button>
+  </>
+) : null}
     </div>
 
     {/* RIGHT SIDE */}
@@ -977,7 +943,13 @@ if (!currentUser) {
       "repeat(3,1fr)",
   }}
 >
-  <button style={styles.counterCard}>
+  <button
+type="button"
+  style={styles.counterCard}
+  onClick={() =>
+    alert("Followers list coming soon")
+  }
+>
     <span style={counterNumberStyle}>
       {socialStats.followers}
     </span>
@@ -987,29 +959,40 @@ if (!currentUser) {
     </span>
   </button>
 
-  <button style={styles.counterCard}>
-    <span style={counterNumberStyle}>
-      {stats.postCount}
-    </span>
+  <button
+type="button"
+  style={styles.counterCard}
+  onClick={() =>
+    alert("Posts are below")
+  }
+>
+  <span style={counterNumberStyle}>
+    {stats.postCount}
+  </span>
 
-    <span style={styles.counterLabel}>
-      Posts
-    </span>
-  </button>
+  <span style={styles.counterLabel}>
+    Posts
+  </span>
+</button>
 
-  <button style={styles.counterCard}>
-    <span style={counterNumberStyle}>
-      {socialStats.following}
-    </span>
+  <button
+type="button"
+  style={styles.counterCard}
+  onClick={() =>
+    alert("Following list coming soon")
+  }
+>
+  <span style={counterNumberStyle}>
+    {socialStats.following}
+  </span>
 
-    <span style={styles.counterLabel}>
-      Smiles
-    </span>
-  </button>
+  <span style={styles.counterLabel}>
+    Smiles
+  </span>
+</button>
 </div>
 
       {/* BIO */}
-{!editing && (
   <div style={styles.bioCard}>
   <p
   style={{
@@ -1041,43 +1024,9 @@ if (!currentUser) {
       </button>
     )}
   </div>
-)}
-
-{isMobile && (
-  <div style={styles.mobileMetaRow}>
-
-    <div style={styles.mobileMetaItem}>
-  Member since{" "}
-  {profile?.created_at
-    ? new Date(
-        profile.created_at
-      ).toLocaleDateString()
-    : "Unknown"}
-</div>
-
-    {["admin", "founder"].includes(
-  profile?.role || ""
-) && (
-  <div style={styles.mobileMetaItem}>
-    Founder
-  </div>
-)}
-
-    {isOwnProfile && (
-      <button
-        style={styles.mobileSettingsBtn}
-        onClick={() =>
-          router.push("/settings")
-        }
-      >
-        <Settings size={18} />
-      </button>
-    )}
-  </div>
-)}
 
       {/* EDIT PROFILE */}
-      {isOwnProfile && !editing && (
+      {false && isOwnProfile && (
         <button
   style={{
     ...styles.editButton,
@@ -1087,104 +1036,13 @@ if (!currentUser) {
         : "auto",
   }}
           onClick={() =>
-            setEditing(true)
-          }
+  router.push("/settings/profile")
+}
         >
           Edit Profile
         </button>
       )}
 
-      {/* EDIT BOX */}
-      {isOwnProfile && editing && (
-        <div style={styles.editBox}>
-          <label style={styles.uploadLabel}>
-            Choose Avatar
-
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) =>
-                setAvatarFile(
-                  e.target.files?.[0] || null
-                )
-              }
-              style={styles.hiddenInput}
-            />
-          </label>
-
-          {avatarFile && (
-            <img
-              src={URL.createObjectURL(
-                avatarFile
-              )}
-              alt="preview"
-              style={{
-                width: 90,
-                height: 90,
-                borderRadius: 18,
-                objectFit: "cover",
-                margin: "0 auto",
-              }}
-            />
-          )}
-
-          <input
-            value={editName}
-            onChange={(e) =>
-              setEditName(e.target.value)
-            }
-            placeholder="Display name"
-            style={styles.input}
-          />
-
-          <textarea
-            value={editBio}
-            onChange={(e) =>
-              setEditBio(e.target.value)
-            }
-            placeholder="Tell people about yourself"
-            style={styles.textarea}
-          />
-
-          <div
-  style={{
-    ...styles.editActions,
-    flexDirection:
-      isMobile
-        ? "column"
-        : "row",
-  }}
->
-            <button
-              style={styles.cancelButton}
-              onClick={() => {
-                setEditName(
-                  profile?.display_name || ""
-                );
-
-                setEditBio(
-                  profile?.bio || ""
-                );
-
-                setAvatarFile(null);
-                setEditing(false);
-              }}
-            >
-              Cancel
-            </button>
-
-            <button
-              style={styles.saveButton}
-              onClick={saveProfile}
-              disabled={saving}
-            >
-              {saving
-                ? "Saving..."
-                : "Save"}
-            </button>
-          </div>
-                </div>
-      )}
     </div>
   </div>
 )}
@@ -1234,22 +1092,22 @@ if (!currentUser) {
               <div style={styles.actions}>
                 <button
                   style={styles.actionBtn}
-                  onClick={(e) =>
-                    e.stopPropagation()
-                  }
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    alert("Likes coming soon");
+                  }}
                 >
                   <Heart size={14} />
                 </button>
 
                 <button
                   style={styles.actionBtn}
-                  onClick={(e) =>
+                  onClick={(e) => {
                     e.stopPropagation()
-                  }
+                    alert("Comments coming soon");
+                  }}
                 >
-                  <MessageSquare
-                    size={14}
-                  />
+                  <MessageSquare size={14} />
                 </button>
               </div>
             </div>
@@ -1352,6 +1210,17 @@ followBtn: {
   cursor: "pointer",
   fontWeight: 800,
   fontSize: 16,
+},
+
+messageBtn: {
+  width: "100%",
+  background: "#15151A",
+  border: "1px solid #333",
+  color: "#fff",
+  padding: "14px 18px",
+  borderRadius: 16,
+  cursor: "pointer",
+  fontWeight: 700,
 },
 
 profileContent: {

@@ -266,6 +266,7 @@ const styles: Record<string, React.CSSProperties> = {
 
   input: {
     width: "100%",
+    boxSizing: "border-box",
     padding: 12,
     marginBottom: 10,
     borderRadius: 10,
@@ -276,6 +277,7 @@ const styles: Record<string, React.CSSProperties> = {
 
   textarea: {
     width: "100%",
+    boxSizing: "border-box",
     minHeight: 120,
     padding: 12,
     borderRadius: 10,

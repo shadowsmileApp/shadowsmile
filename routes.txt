@@ -1,0 +1,15 @@
+app/create/page.tsx
+app/dev/page.tsx
+app/marketplace/page.tsx
+app/messages/page.tsx
+app/onboarding/page.tsx
+app/page.tsx
+app/post/[id]/page.tsx
+app/profile/[id]/page.tsx
+app/reset-password/page.tsx
+app/search/page.tsx
+app/settings/account/page.tsx
+app/settings/page.tsx
+app/settings/privacy/page.tsx
+app/settings/profile/page.tsx
+app/signin/page.tsx

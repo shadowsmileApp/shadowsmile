@@ -38,6 +38,10 @@ Settings </h1>
       }}
     >
       <button
+  onClick={() =>
+    window.location.href =
+      "/settings/profile"
+  }
   style={{
     width: "100%",
     background: "transparent",
@@ -65,6 +69,10 @@ Settings </h1>
       }}
     >
       <button
+onClick={() =>
+  window.location.href =
+    "/settings/account"
+}
   style={{
     width: "100%",
     background: "transparent",
@@ -92,6 +100,10 @@ Settings </h1>
       }}
     >
       <button
+onClick={() =>
+  window.location.href =
+    "/settings/privacy"
+}
   style={{
     width: "100%",
     background: "transparent",

@@ -240,7 +240,13 @@ if (!user) {
       <section style={styles.commentBox}>
         <h3>Comments</h3>
 
-        <div style={{ display: "flex", gap: 10 }}>
+        <div
+  style={{
+    display: "flex",
+    gap: 10,
+    flexWrap: "wrap",
+  }}
+>
           <input
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
@@ -307,6 +313,8 @@ const styles: Record<string, React.CSSProperties> = {
 
   input: {
     flex: 1,
+    minWidth: 220,
+    boxSizing: "border-box",
     padding: 10,
     borderRadius: 8,
     background: "#111",
@@ -328,5 +336,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: "#111",
     borderRadius: 8,
     border: "1px solid #222",
+    wordBreak: "break-word",
+    overflowWrap: "anywhere",
   },
 };

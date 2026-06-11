@@ -25,6 +25,9 @@ export default function SearchPage() {
   const [searchTerm, setSearchTerm] =
      useState("");
 
+  const [results, setResults] =
+  useState<any[]>([]);
+
   /* ================= LOAD USER ================= */
 
   useEffect(() => {
@@ -73,6 +76,37 @@ export default function SearchPage() {
     user,
     router,
   ]);
+
+/* ================= USER SEARCH ================= */
+
+useEffect(() => {
+  async function searchUsers() {
+    if (!searchTerm.trim()) {
+      setResults([]);
+      return;
+    }
+
+    const { data, error } =
+      await supabase
+        .from("profiles")
+        .select(
+          "id, handle, display_name"
+        )
+        .or(
+          `handle.ilike.%${searchTerm}%,display_name.ilike.%${searchTerm}%`
+        )
+        .limit(20);
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    setResults(data || []);
+  }
+
+  searchUsers();
+}, [searchTerm]);
 
   /* ================= LOADING ================= */
 
@@ -151,34 +185,47 @@ return (
         </div>
       ) : (
         <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 12,
-          }}
-        >
-          <div
-            style={{
-              background: "#111118",
-              border: "1px solid #222",
-              borderRadius: 16,
-              padding: 16,
-            }}
-          >
-            @shadowfriend
-          </div>
+  style={{
+    display: "flex",
+    flexDirection: "column",
+    gap: 12,
+  }}
+>
+  {results.map((profile) => (
+    <div
+      key={profile.id}
+      onClick={() =>
+        router.push(
+          `/profile/${profile.id}`
+        )
+      }
+      style={{
+        background: "#111118",
+        border: "1px solid #222",
+        borderRadius: 16,
+        padding: 16,
+        cursor: "pointer",
+      }}
+    >
+      <div
+        style={{
+          fontWeight: 700,
+        }}
+      >
+        {profile.display_name}
+      </div>
 
-          <div
-            style={{
-              background: "#111118",
-              border: "1px solid #222",
-              borderRadius: 16,
-              padding: 16,
-            }}
-          >
-            @musicvibes
-          </div>
-        </div>
+      <div
+        style={{
+          color: "#888",
+          marginTop: 4,
+        }}
+      >
+        @{profile.handle}
+      </div>
+    </div>
+  ))}
+</div>
       )}
     </div>
   </main>
