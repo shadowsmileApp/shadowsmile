@@ -16,6 +16,11 @@ import { supabase } from "../../lib/supabase";
 import MessageBubble from "./components/MessageBubble";
 import MessageInput from "./components/MessageInput";
 
+import {
+  sendMessage,
+  getConversation,
+} from "./lib/messages";
+
 export default function MessagesPage() {
   const [selectedChat, setSelectedChat] =
     useState<string | null>(null);
@@ -27,6 +32,10 @@ export default function MessagesPage() {
 
   const [messageText, setMessageText] =
     useState("");
+
+const [conversation,
+  setConversation] =
+useState<any[]>([]);
 
 const [
 isMobile, setIsMobile] =
@@ -718,7 +727,8 @@ useEffect(() => {
 useEffect(() => {
   if (selectedChat) {
     localStorage.setItem(
-      "shadowsmile_selected_chat",
+      
+"shadowsmile_selected_chat",
       selectedChat
     );
   } else {
@@ -728,12 +738,55 @@ useEffect(() => {
   }
 }, [selectedChat]);
 
+useEffect(() => {
+  // disabled for now
+}, []);
+
+async function loadConversation(
+  otherUserId: string
+) {
+  if (!user) return;
+
+  const { data, error } =
+    await getConversation(
+      user.id,
+      otherUserId
+    );
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  setConversation(data || []);
+}
+
 const handleSendMessage =
-  () => {
+  async () => {
     if (
       !messageText.trim()
     )
       return;
+
+if (
+  selectedChat &&
+  chatAccess === "open" &&
+  user
+) {
+  await sendMessage(
+    user.id,
+    selectedChat,
+    messageText
+  );
+
+  await loadConversation(
+    selectedChat
+  );
+
+  setMessageText("");
+
+  return;
+}
 
     // PRIVATE REQUEST
     if (
@@ -815,173 +868,26 @@ const handleSendMessage =
       chatAccess ===
       "open"
     ) {
-      setMessagesByChat(
-        (prev) => ({
-          ...prev,
+      await sendMessage(
+  user.id,
+  selectedChat!,
+  messageText
+);
 
-          [selectedChat!]: [
-            ...(prev[
-              selectedChat!
-            ] || []),
+await loadConversation(
+  selectedChat!
+);
 
-            {
-              sender: "me",
+setMessageText("");
 
-              text:
-                messageText,
+setChatActivity(
+  (prev) => ({
+    ...prev,
+    [selectedChat!]:
+      Date.now(),
+  })
+);
 
-              time:
-                new Date().toLocaleTimeString(
-                  [],
-                  {
-                    hour:
-                      "numeric",
-
-                    minute:
-                      "2-digit",
-                  }
-                ),
-
-              status:
-                "Sent",
-            },
-          ],
-        })
-      );
-
-      setChatActivity(
-        (prev) => ({
-          ...prev,
-
-          [selectedChat!]:
-            Date.now(),
-        })
-      );
-
-      setMessageText("");
-
-      const activeChat =
-        selectedChat;
-
-      setTimeout(() => {
-        const replies = [
-          "lol",
-          "real",
-          "that's wild",
-          "fr 😂",
-          "I get that",
-          "interesting",
-          "tell me more",
-          "nahhh",
-          "💀",
-          "you serious?",
-        ];
-
-        const randomReply =
-          replies[
-            Math.floor(
-              Math.random() *
-                replies.length
-            )
-          ];
-
-        setMessagesByChat(
-          (prev) => {
-            if (
-              !prev[
-                activeChat!
-              ]
-            ) {
-              return prev;
-            }
-
-            return {
-              ...prev,
-
-              [activeChat!]:
-                (
-                  prev[
-                    activeChat!
-                  ] || []
-                ).map(
-                  (
-                    msg,
-                    index,
-                    arr
-                  ) => {
-                    if (
-                      msg.sender ===
-                        "me" &&
-                      index ===
-                        arr.length -
-                          1
-                    ) {
-                      return {
-                        ...msg,
-
-                        status:
-                          "Read",
-                      };
-                    }
-
-                    return msg;
-                  }
-                ),
-            };
-          }
-        );
-
-        setMessagesByChat(
-          (prev) => {
-            if (
-              !prev[
-                activeChat!
-              ]
-            ) {
-              return prev;
-            }
-
-            return {
-              ...prev,
-
-              [activeChat!]: [
-                ...(prev[
-                  activeChat!
-                ] || []),
-
-                {
-                  sender:
-                    "them",
-
-                  text:
-                    randomReply,
-
-                  time:
-                    new Date().toLocaleTimeString(
-                      [],
-                      {
-                        hour:
-                          "numeric",
-
-                        minute:
-                          "2-digit",
-                      }
-                    ),
-                },
-              ],
-            };
-          }
-        );
-
-        setChatActivity(
-          (prev) => ({
-            ...prev,
-
-            [activeChat!]:
-              Date.now(),
-          })
-        );
-      }, 2500);
     }
   };
 
@@ -2145,27 +2051,31 @@ requestStatusByChat[
     gap: 12,
   }}
 >
-  {selectedChat &&
-    messagesByChat[
-      selectedChat
-    ]?.map(
-      (
-        message,
-        index
-      ) => (
-        <MessageBubble
-          key={index}
-          sender={
-            message.sender
+  {conversation.map(
+  (message, index) => (
+    <MessageBubble
+      key={index}
+      sender={
+        message.sender_id ===
+        user?.id
+          ? "me"
+          : "them"
+      }
+      text={message.body}
+      time={
+        new Date(
+          message.created_at
+        ).toLocaleTimeString(
+          [],
+          {
+            hour: "numeric",
+            minute: "2-digit",
           }
-          text={message.text}
-          time={message.time}
-          status={
-            message.status
-          }
-        />
-      )
-    )}
+        )
+      }
+    />
+    )
+)}
 </div>
 
 </div>

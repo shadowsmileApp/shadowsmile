@@ -41,6 +41,7 @@ export default function LayoutShell({
   const hideNav =
     pathname === "/signin" ||
     pathname === "/reset-password" ||
+    pathname === "/onboarding" ||
     hideMessagesNav;
 
   return (

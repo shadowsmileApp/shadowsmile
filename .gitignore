@@ -36,4 +36,27 @@ security-*.txt
 # AI project management docs
 docs/00-shadow-smile-master-system.md
 docs/01-shadow-smile-project-state.md
+docs/02-shadow-smile-founder-canon.md
+docs/03-route-map.md
 docs/UPDATE-PROCEDURE.md
+
+# Archived secrets and backups
+docs/archive/
+backups/
+
+# Next cache
+.next/
+
+# old page backups
+*.save
+*.save.*
+
+# backups
+backups/
+
+# archived docs
+docs/archive/
+
+# save files
+*.save
+*.save.*

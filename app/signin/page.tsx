@@ -48,7 +48,28 @@ const [confirmPassword, setConfirmPassword] =
         await supabase.auth.getSession();
 
       if (session) {
-        router.push("/");
+        const {
+  data: { user },
+} = await supabase.auth.getUser();
+
+if (!user) {
+  return;
+}
+
+const { data: profile } =
+  await supabase
+    .from("profiles")
+    .select("onboarding_complete")
+    .eq("id", user.id)
+    .maybeSingle();
+
+if (
+  profile?.onboarding_complete
+) {
+  router.push("/");
+} else {
+  router.push("/onboarding");
+}
       }
     }
 
@@ -205,9 +226,18 @@ const trimmedHandle =
             password,
             options: {
   data: {
-    handle: handle.trim().toLowerCase(),
-    first_name: firstName.trim(),
-    last_name: lastName.trim(),
+  handle: handle.trim().toLowerCase(),
+
+  first_name: firstName.trim(),
+
+  last_name: lastName.trim(),
+
+  date_of_birth: birthDate
+      .toISOString()
+      .split("T")[0],
+
+    phone_number:
+      phoneNumber.trim() || null,
   },
 },
           });
@@ -233,7 +263,9 @@ const trimmedHandle =
     lastName.trim(),
 
   date_of_birth:
-    dateOfBirth,
+    birthDate
+      .toISOString()
+      .split("T")[0],
 
   phone_number:
     phoneNumber.trim() || null,
@@ -287,20 +319,37 @@ const trimmedHandle =
 return;
 
       } else {
-        const { error } =
-          await supabase.auth.signInWithPassword(
-            {
-              email,
-              password,
-            }
-          );
+        const {
+  data,
+  error,
+} = await supabase.auth.signInWithPassword({
+  email,
+  password,
+});
 
-        if (error) {
-          alert(error.message);
-          return;
-        }
+if (error) {
+  alert(error.message);
+  return;
+}
 
-        router.push("/");
+const currentUser = data.user;
+
+if (!currentUser) {
+  return;
+}
+
+const { data: profile } =
+  await supabase
+    .from("profiles")
+    .select("onboarding_complete")
+    .eq("id", currentUser.id)
+    .maybeSingle();
+
+if (profile?.onboarding_complete) {
+  router.push("/");
+} else {
+  router.push("/onboarding");
+}
       }
     } catch (err) {
       console.error(err);
