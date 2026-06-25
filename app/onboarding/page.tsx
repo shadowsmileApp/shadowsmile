@@ -208,26 +208,23 @@ step === 1
     return;
   }
 
-  const { error } = await supabase
-    .from("profiles")
-    .update({
-      reason: answers.reason,
+  console.log("Saving onboarding for user:", user.id);
 
-      vibe: answers.vibe,
+const { data, error } = await supabase
+  .from("profiles")
+  .update({
+    reason: answers.reason,
+    vibe: answers.vibe,
+    posting_style: answers.postingStyle,
+    interests: answers.interests,
+    privacy_preference: answers.privacy,
+    onboarding_complete: true,
+  })
+  .eq("id", user.id)
+  .select();
 
-      posting_style:
-        answers.postingStyle,
-
-      interests:
-        answers.interests,
-
-      privacy_preference:
-        answers.privacy,
-
-      onboarding_complete:
-        true,
-    })
-    .eq("id", user.id);
+console.log("Update result:", data);
+console.log("Update error:", error);
 
   if (error) {
     console.error(error);

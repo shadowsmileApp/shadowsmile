@@ -869,8 +869,8 @@ onClick={() =>
   type="button"
   style={styles.messageBtn}
       onClick={() =>
-        router.push(`/messages?user=${profile.handle}`)
-      }
+  router.push(`/messages?user=${profile.id}`)
+}
     >
       Message User
     </button>

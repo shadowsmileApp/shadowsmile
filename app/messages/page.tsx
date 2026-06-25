@@ -33,9 +33,32 @@ export default function MessagesPage() {
   const [messageText, setMessageText] =
     useState("");
 
-const [conversation,
-  setConversation] =
+const [conversation, setConversation] =
 useState<any[]>([]);
+
+const [conversations, setConversations] =
+useState<
+{
+id: string;
+display_name: string;
+handle: string;
+}[]
+>([]);
+
+const [conversationPreviews,
+setConversationPreviews] =
+useState<
+Record<
+string,
+{
+body:string;
+time:string;
+}
+>
+>({});
+
+const [chatDisplayName, setChatDisplayName] =
+  useState("");
 
 const [
 isMobile, setIsMobile] =
@@ -44,6 +67,65 @@ isMobile, setIsMobile] =
 const [searchTerm,
   setSearchTerm] =
 useState("");
+
+const [searchResults,
+  setSearchResults] =
+useState<any[]>([]);
+
+const [searchLoading,
+  setSearchLoading] =
+useState(false);
+
+const [showGlobalSearch,
+  setShowGlobalSearch] =
+useState(false);
+
+useEffect(() => {
+  async function searchProfiles() {
+    const search =
+      searchTerm.trim();
+
+    if (search.length < 2) {
+      setSearchResults([]);
+      setShowGlobalSearch(false);
+      return;
+    }
+
+    setSearchLoading(true);
+
+    const { data, error } =
+      await supabase
+        .from("profiles")
+        .select(
+          "id, display_name, handle"
+        )
+        .or(
+          `display_name.ilike.%${search}%,handle.ilike.%${search}%`
+        )
+        .limit(10);
+
+    if (error) {
+      console.error(
+        "Profile search error:",
+        error
+      );
+      setSearchLoading(false);
+      return;
+    }
+
+    setSearchResults(
+      data || []
+    );
+
+    setShowGlobalSearch(
+      true
+    );
+
+    setSearchLoading(false);
+  }
+
+  searchProfiles();
+}, [searchTerm]);
 
 const [openMenu,
   setOpenMenu] =
@@ -74,6 +156,9 @@ const router = useRouter();
 const searchParams =
   useSearchParams();
 
+const userParam =
+  searchParams.get("user");
+
 const [user, setUser] =
   useState<User | null>(null);
 
@@ -94,13 +179,7 @@ useState<string[]>(
 
 const [unreadChats,
   setUnreadChats] =
-useState<
-  Record<string, number>
->({
-  shadowfriend: 2,
-  gamerzone: 1,
-  musicvibes: 4,
-});
+useState<Record<string, number>>({});
 
 const chatContainerRef =
   useRef<HTMLDivElement | null>(
@@ -120,204 +199,6 @@ useState(false);
 const [messagesLoaded,
   setMessagesLoaded] =
 useState(false);
-
-  const [messagesByChat,
-  setMessagesByChat] =
-useState<
-  Record<
-    string,
-    {
-      sender:
-        | "me"
-        | "them";
-      text: string;
-      time: string;
-      status?: string;
-    }[]
-  >
->({
-  shadowfriend: [
-    {
-      sender:
-        "them",
-      text:
-        "Hey 👋",
-      time:
-        "1:42 AM",
-    },
-    {
-      sender:
-        "them",
-      text:
-        "What's up?",
-      time:
-        "1:43 AM",
-    },
-  ],
-
-  musicvibes: [
-    {
-      sender:
-        "them",
-      text:
-        "That song was amazing",
-      time:
-        "11:12 PM",
-    },
-  ],
-
-  nightowl: [
-    {
-      sender:
-        "them",
-      text:
-        "still awake?",
-      time:
-        "2:05 AM",
-    },
-  ],
-
-  gamerzone: [
-    {
-      sender:
-        "them",
-      text:
-        "bro join the lobby",
-      time:
-        "8:14 PM",
-    },
-  ],
-
-shadowcoder: [
-  {
-    sender: "them",
-    text: "yo check the build",
-    time: "6:14 PM",
-  },
-],
-
-latevibes: [
-  {
-    sender: "them",
-    text: "u still awake?",
-    time: "2:58 AM",
-  },
-],
-
-deepthoughts: [
-  {
-    sender: "them",
-    text: "random question... what scares you most?",
-    time: "12:18 AM",
-  },
-],
-
-musicproducerx: [
-  {
-    sender: "them",
-    text: "that mix was crazy",
-    time: "10:42 PM",
-  },
-],
-
-memelord9000: [
-  {
-    sender: "them",
-    text: "bro 💀💀💀",
-    time: "8:02 PM",
-  },
-],
-
-verylongusernamethatshouldtestoverflow: [
-  {
-    sender: "them",
-    text: "testing long username behavior",
-    time: "4:22 PM",
-  },
-],
-
-"👥 Night Squad": [
-  {
-    sender: "them",
-    text: "who's awake rn",
-    time: "1:16 AM",
-  },
-],
-
-"👥 Music Lab": [
-  {
-    sender: "them",
-    text: "new beat dropped",
-    time: "7:44 PM",
-  },
-],
-
-"🏠 Gaming Hub": [
-  {
-    sender: "them",
-    text: "raid starts in 10",
-    time: "9:15 PM",
-  },
-],
-
-"🏠 Late Night Vibes": [
-  {
-    sender: "them",
-    text: "music + chill",
-    time: "11:49 PM",
-  },
-],
-
-privateartist: [
-  {
-    sender: "them",
-    text: "thanks for listening",
-    time: "6:33 PM",
-  },
-],
-
-nightshift: [
-  {
-    sender: "them",
-    text: "work sucks tonight",
-    time: "3:14 AM",
-  },
-],
-
-storytime: [
-  {
-    sender: "them",
-    text: "bro something wild happened",
-    time: "5:51 PM",
-  },
-],
-
-pixelghost: [
-  {
-    sender: "them",
-    text: "wanna game later?",
-    time: "7:31 PM",
-  },
-],
-
-randomhuman: [
-  {
-    sender: "them",
-    text: "hello lol",
-    time: "9:02 AM",
-  },
-],
-});
-
-const [requestStatusByChat,
-  setRequestStatusByChat] =
-useState<
-  Record<string, boolean>
->({
-  musicvibes: false,
-  privateartist: false,
-  deepthoughts: false,
-});
 
 useEffect(() => {
   async function loadUser() {
@@ -434,56 +315,9 @@ useEffect(() => {
       "shadowsmile_unread_chats"
     );
 
-  // LOAD MESSAGES
-  if (savedMessages) {
-    const parsedMessages =
-      JSON.parse(savedMessages);
+  // Fake messages disabled for DM migration
 
-    setMessagesByChat(
-      (prev) => ({
-        ...prev,
-        ...parsedMessages,
-      })
-    );
-
-    // Generate starter activity
-    // ONLY if no saved activity exists
-    if (!savedActivity) {
-      const starterActivity:
-        Record<
-          string,
-          number
-        > = {};
-
-      Object.keys(
-        parsedMessages
-      ).forEach(
-        (
-          chatName,
-          index
-        ) => {
-          starterActivity[
-            chatName
-          ] =
-            Date.now() -
-            index * 1000;
-        }
-      );
-
-      setChatActivity(
-        starterActivity
-      );
-    }
-  }
-
-  // LOAD REQUESTS
-  if (savedRequests) {
-    setRequestStatusByChat(
-      JSON.parse(
-        savedRequests
-      )
-    );
-  }
+  // DM request system disabled for now
 
   // LOAD ACTIVITY
   if (savedActivity) {
@@ -617,7 +451,7 @@ top: container.scrollHeight,
 behavior: "smooth",
   });
 });
-}, [messagesByChat]);
+}, [conversation]);
 
 useEffect(() => {
   if (!messagesLoaded)
@@ -626,22 +460,17 @@ useEffect(() => {
   localStorage.setItem(
     "shadowsmile_messages",
     JSON.stringify(
-      messagesByChat
+      conversation
     )
   );
 }, [
-  messagesByChat,
+  conversation,
   messagesLoaded,
 ]);
 
 useEffect(() => {
-  localStorage.setItem(
-    "shadowsmile_requests",
-    JSON.stringify(
-      requestStatusByChat
-    )
-  );
-}, [requestStatusByChat]);
+  // DM request system disabled for now
+}, []);
 
 useEffect(() => {
   localStorage.setItem(
@@ -695,30 +524,7 @@ useEffect(() => {
 }, [loading, user, router]);
 
 useEffect(() => {
-  const userFromUrl =
-    searchParams.get("user");
-
-  if (!userFromUrl) return;
-
-  setSelectedChat(userFromUrl);
-
-  setChatAccess(
-    requestStatusByChat[
-      userFromUrl
-    ] === false
-      ? "request"
-      : "open"
-  );
-}, [
-  searchParams,
-  requestStatusByChat,
-]);
-
-useEffect(() => {
-  if (
-    typeof window !==
-    "undefined"
-  ) {
+  if (typeof window !== "undefined") {
     window.history.scrollRestoration =
       "manual";
   }
@@ -742,10 +548,24 @@ useEffect(() => {
   // disabled for now
 }, []);
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 async function loadConversation(
   otherUserId: string
 ) {
-  if (!user) return;
+  if (!UUID_REGEX.test(otherUserId)) {
+  console.log(
+    "Skipping non-UUID chat:",
+    otherUserId
+  );
+  return;
+}
+
+if (!user) return;
+
+  console.log("Current user:", user.id);
+  console.log("Other user:", otherUserId);
 
   const { data, error } =
     await getConversation(
@@ -761,18 +581,254 @@ async function loadConversation(
   setConversation(data || []);
 }
 
-const handleSendMessage =
-  async () => {
-    if (
-      !messageText.trim()
-    )
-      return;
-
-if (
-  selectedChat &&
-  chatAccess === "open" &&
-  user
+async function loadConversationPreview(
+  otherUserId: string
 ) {
+  if (!user) return;
+
+  const { data, error } =
+    await supabase
+      .from("direct_messages")
+      .select(
+        "body, created_at"
+      )
+      .or(
+  `and(sender_id.eq.${user.id},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${user.id})`
+)
+      .order(
+        "created_at",
+        {
+          ascending: false,
+        }
+      )
+      .limit(1);
+
+  if (error) {
+  console.error(
+    "Preview query error:",
+    error
+  );
+  return;
+}
+
+if (!data || data.length === 0) {
+  return;
+}
+
+  setConversationPreviews(
+    (prev) => ({
+      ...prev,
+
+      [otherUserId]: {
+        body: data[0].body,
+
+        time:
+          new Date(
+            data[0].created_at
+          ).toLocaleTimeString(
+            [],
+            {
+              hour:
+                "numeric",
+              minute:
+                "2-digit",
+            }
+          ),
+      },
+    })
+  );
+}
+
+useEffect(() => {
+  if (!selectedChat || !user) return;
+
+  loadConversation(selectedChat);
+}, [selectedChat, user]);
+
+useEffect(() => {
+  if (!selectedChat || !user) return;
+
+  const channel = supabase
+    .channel("messages-realtime")
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "direct_messages",
+      },
+      () => {
+        loadConversation(selectedChat);
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, [selectedChat, user]);
+
+useEffect(() => {
+  if (!user) return;
+
+  conversations.forEach(
+    (chat) => {
+      loadConversationPreview(
+        chat.id
+      );
+    }
+  );
+}, [conversations, user]);
+
+useEffect(() => {
+  async function loadConversations() {
+    if (!user) return;
+
+    const { data, error } =
+      await supabase
+        .from("direct_messages")
+        .select(
+          "sender_id, receiver_id"
+        );
+
+    if (error) {
+      console.error(
+        "Conversation load error:",
+        error
+      );
+      return;
+    }
+
+    const otherUserIds =
+      Array.from(
+        new Set(
+          (data || [])
+            .map((message) => {
+              if (
+                message.sender_id ===
+                user.id
+              ) {
+                return message.receiver_id;
+              }
+
+              if (
+                message.receiver_id ===
+                user.id
+              ) {
+                return message.sender_id;
+              }
+
+              return null;
+            })
+            .filter(Boolean)
+        )
+      );
+
+    if (
+      otherUserIds.length === 0
+    ) {
+      return;
+    }
+
+    const {
+      data: profiles,
+      error: profileError,
+    } = await supabase
+      .from("profiles")
+      .select(
+  "id, display_name, handle"
+)
+      .in(
+        "id",
+        otherUserIds
+      );
+
+    if (profileError) {
+      console.error(
+        profileError
+      );
+      return;
+    }
+
+    setConversations(
+  (profiles || []).map(
+    (profile) => ({
+      id: profile.id,
+      display_name:
+        profile.display_name ||
+        "Unknown User",
+
+      handle:
+        profile.handle || "",
+    })
+  )
+);
+  }
+
+  loadConversations();
+}, [user]);
+
+useEffect(() => {
+  async function loadChatName() {
+    if (!selectedChat) return;
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", selectedChat)
+      .single();
+
+    if (!error && data) {
+      setChatDisplayName(data.display_name);
+
+      setConversations((prev) =>
+        prev.map((conversation) =>
+          conversation.id === selectedChat
+            ? {
+                ...conversation,
+                display_name: data.display_name,
+              }
+            : conversation
+        )
+      );
+    }
+  }
+
+  loadChatName();
+}, [selectedChat]);
+
+useEffect(() => {
+  if (!userParam) return;
+
+  setSelectedChat(userParam);
+
+  setConversations((prev) => {
+  const alreadyExists = prev.some(
+    (conversation) => conversation.id === userParam
+  );
+
+  if (alreadyExists) {
+    return prev;
+  }
+
+  return [
+    ...prev,
+    {
+      id: userParam,
+      display_name: "Loading...",
+      handle: "",
+    },
+  ];
+});
+}, [userParam]);
+
+const handleSendMessage = async () => {
+  if (
+    !messageText.trim() ||
+    !selectedChat ||
+    !user
+  ) return;
+
   await sendMessage(
     user.id,
     selectedChat,
@@ -784,112 +840,7 @@ if (
   );
 
   setMessageText("");
-
-  return;
-}
-
-    // PRIVATE REQUEST
-    if (
-      chatAccess ===
-        "request" &&
-      selectedChat &&
-      requestStatusByChat[
-        selectedChat
-      ] === false &&
-      (
-        messagesByChat[
-          selectedChat
-        ]?.filter(
-          (m) =>
-            m.sender ===
-            "me"
-        ).length || 0
-      ) === 0
-    ) {
-      setRequestStatusByChat(
-        (prev) => ({
-          ...prev,
-
-          [selectedChat]:
-            false,
-        })
-      );
-
-      setMessagesByChat(
-        (prev) => ({
-          ...prev,
-
-          [selectedChat]: [
-            ...(prev[
-              selectedChat
-            ] || []),
-
-            {
-              sender: "me",
-
-              text:
-                messageText,
-
-              time:
-                new Date().toLocaleTimeString(
-                  [],
-                  {
-                    hour:
-                      "numeric",
-
-                    minute:
-                      "2-digit",
-                  }
-                ),
-
-              status:
-                "Sent",
-            },
-          ],
-        })
-      );
-
-      setChatActivity(
-        (prev) => ({
-          ...prev,
-
-          [selectedChat]:
-            Date.now(),
-        })
-      );
-
-      setMessageText("");
-
-      return;
-    }
-
-    // NORMAL MESSAGE
-    if (
-      chatAccess ===
-      "open"
-    ) {
-      await sendMessage(
-  user.id,
-  selectedChat!,
-  messageText
-);
-
-await loadConversation(
-  selectedChat!
-);
-
-setMessageText("");
-
-setChatActivity(
-  (prev) => ({
-    ...prev,
-    [selectedChat!]:
-      Date.now(),
-  })
-);
-
-    }
-  };
+};
 
 if (loading) {
   return (
@@ -1001,7 +952,10 @@ if (!user) {
         {(!isMobile || !selectedChat) && (
 <section
   style={{
-    width: isMobile ? "100%" : 340,
+    width:
+      isMobile
+        ? "100%"
+        : "clamp(320px, 30vw, 380px)",
     
     borderRight:
   isMobile
@@ -1061,28 +1015,109 @@ if (!user) {
   </div>
 )}
 
-          <input
-  id="search-messages"
-  name="searchMessages"
-  value={searchTerm}
-  onChange={(e) =>
-    setSearchTerm(
-      e.target.value
-    )
-  }
-  placeholder="Search messages..."
-            style={{
-              width: "100%",
-              padding: 14,
-              borderRadius: 16,
-              border:
-                "1px solid #222",
-              background: "#111",
-              color: "#fff",
-              outline: "none",
-              marginBottom: 20,
-            }}
-          />
+          <div
+  style={{
+    marginBottom: 20,
+    width: "100%",
+    position: "relative",
+  }}
+>
+  <input
+    id="search-messages"
+    name="searchMessages"
+    value={searchTerm}
+    onChange={(e) =>
+      setSearchTerm(
+        e.target.value
+      )
+    }
+    placeholder="Search people, groups, servers..."
+    style={{
+      width: "100%",
+      padding: 14,
+      borderRadius: 16,
+      border: "1px solid #222",
+      background: "#111",
+      color: "#fff",
+      outline: "none",
+      boxSizing: "border-box",
+    }}
+  />
+{showGlobalSearch &&
+  searchTerm.trim().length >= 2 && (
+    <div
+      style={{
+        position: "absolute",
+        top: 60,
+        left: 20,
+        right: 20,
+        background: "#16161F",
+        border: "1px solid #222",
+        borderRadius: 16,
+        maxHeight: 320,
+        overflowY: "auto",
+        zIndex: 9999,
+      }}
+    >
+      {searchLoading ? (
+        <div
+          style={{
+            padding: 16,
+            color: "#888",
+          }}
+        >
+          Searching...
+        </div>
+      ) : (
+        searchResults.map(
+          (profile) => (
+            <div
+              key={profile.id}
+              onClick={() => {
+                setSelectedChat(
+                  profile.id
+                );
+
+                setSearchTerm("");
+
+                setShowGlobalSearch(
+                  false
+                );
+              }}
+              style={{
+                padding: 14,
+                borderBottom:
+                  "1px solid #222",
+                cursor: "pointer",
+              }}
+            >
+              <div
+                style={{
+                  fontWeight: 700,
+                }}
+              >
+                {
+                  profile.display_name
+                }
+              </div>
+
+              <div
+                style={{
+                  color: "#888",
+                  fontSize: 13,
+                }}
+              >
+                @
+                {profile.handle}
+              </div>
+            </div>
+          )
+        )
+      )}
+    </div>
+)}
+
+</div>
 
 <div
   style={{
@@ -1091,6 +1126,7 @@ if (!user) {
     marginBottom: 16,
   }}
 >
+{/*
   <button
   onClick={() => {
     const name =
@@ -1135,7 +1171,7 @@ if (!user) {
           Date.now(),
       })
     );
-  }}
+  }
   style={{
     flex: 1,
     padding: 14,
@@ -1151,9 +1187,11 @@ if (!user) {
 >
   + Group Chat
 </button>
+*/}
 
+{/*
 <button
-  onClick={() => {
+  onClick={() => {}
     const name =
       prompt(
         "Server name?"
@@ -1196,7 +1234,7 @@ if (!user) {
           Date.now(),
       })
     );
-  }}
+  }
   style={{
     flex: 1,
     padding: 14,
@@ -1212,6 +1250,7 @@ if (!user) {
 >
   + Server
 </button>
+*/}
 </div>
 
           {/* MESSAGE REQUESTS */}
@@ -1270,23 +1309,37 @@ if (!user) {
     minHeight: 0,
   }}
 >
-  {Object.keys(
-  messagesByChat
-)
-.filter((chat) =>
-  chat
-    .toLowerCase()
-    .includes(
-      searchTerm.toLowerCase()
-    )
-)
+  {conversations
+.filter((chat) => {
+  const search =
+    searchTerm
+      .toLowerCase()
+      .trim();
+
+  if (!search)
+    return true;
+
+  return (
+    (chat.display_name || "")
+      .toLowerCase()
+      .includes(search) ||
+
+    (chat.handle || "")
+      .toLowerCase()
+      .includes(search) ||
+
+    (`@${chat.handle || ""}`)
+      .toLowerCase()
+      .includes(search)
+  );
+})
 .sort((a, b) => {
 
   const aPinned =
-    pinnedChats.includes(a);
+    pinnedChats.includes(a.id);
 
   const bPinned =
-    pinnedChats.includes(b);
+    pinnedChats.includes(b.id);
 
   if (
     aPinned &&
@@ -1302,51 +1355,44 @@ if (!user) {
 
   return (
     (
-      chatActivity[b] ||
+      chatActivity[b.id] ||
       0
     ) -
     (
-      chatActivity[a] ||
+      chatActivity[a.id] ||
       0
     )
   );
 })
 .map((chatName) => (
     <div
-      key={chatName}
+      key={chatName.id}
       onClick={() => {
         setSelectedChat(
-          chatName
+          chatName.id
         );
 
 setUnreadChats(
   (prev) => ({
     ...prev,
-    [chatName]: 0,
+    [chatName.id]: 0,
   })
 );
 
-        setChatAccess(
-  requestStatusByChat[
-    chatName
-  ] === false
-    ? "request"
-    : "open"
-);
       }}
       style={{
   background:
-    selectedChat === chatName
+    selectedChat === chatName.id
       ? "linear-gradient(180deg,#181827,#12121d)"
       : "#111118",
 
   border:
-    selectedChat === chatName
+    selectedChat === chatName.id
       ? "1px solid #39FF88"
       : "1px solid #222",
 
   boxShadow:
-    selectedChat === chatName
+    selectedChat === chatName.id
       ? "0 0 0 1px rgba(57,255,136,.15)"
       : "none",
 
@@ -1391,14 +1437,7 @@ setUnreadChats(
     paddingRight: 10,
   }}
 >
-  {chatName.startsWith(
-    "🏠"
-  ) ||
-  chatName.startsWith(
-    "👥"
-  )
-    ? chatName
-    : `@${chatName}`}
+  {chatName.display_name}
 </div>
 
   <div
@@ -1432,7 +1471,7 @@ const shouldOpenUp =
 setMenuDirection(
   (prev) => ({
     ...prev,
-    [chatName]:
+    [chatName.id]:
       shouldOpenUp
         ? "up"
         : "down",
@@ -1440,10 +1479,9 @@ setMenuDirection(
 );
 
 setOpenMenu(
-  openMenu ===
-    chatName
+  openMenu === chatName.id
       ? null
-      : chatName
+      : chatName.id
 );
       }}
       style={{
@@ -1461,21 +1499,21 @@ setOpenMenu(
       ⋮
     </button>
 
-    {openMenu === chatName && (
+    {openMenu === chatName.id && (
   <div
     style={{
       position: "absolute",
 
 top:
   menuDirection[
-    chatName
+    chatName.id
   ] === "down"
     ? 28
     : "auto",
 
 bottom:
   menuDirection[
-    chatName
+    chatName.id
   ] === "up"
     ? 28
     : "auto",
@@ -1484,7 +1522,7 @@ right: 0,
 
 transform:
   menuDirection[
-    chatName
+    chatName.id
   ] === "up"
     ? "translateY(-8px)"
     : "translateY(8px)",
@@ -1511,24 +1549,17 @@ transform:
             e.stopPropagation();
 
             setPinnedChats(
-              (
-                prev
-              ) =>
-                prev.includes(
-                  chatName
-                )
-                  ? prev.filter(
-                      (
-                        c
-                      ) =>
-                        c !==
-                        chatName
-                    )
-                  : [
-                      ...prev,
-                      chatName,
-                    ]
-            );
+  (prev) =>
+    prev.includes(chatName.id)
+      ? prev.filter(
+          (c) =>
+            c !== chatName.id
+        )
+      : [
+          ...prev,
+          chatName.id,
+        ]
+);
 
             setOpenMenu(
               null
@@ -1552,7 +1583,7 @@ transform:
           }}
         >
           {pinnedChats.includes(
-            chatName
+            chatName.id
           )
             ? "📌 Unpin"
             : "📌 Pin"}
@@ -1565,26 +1596,13 @@ transform:
           ) => {
             e.stopPropagation();
 
-            const updated =
-              {
-                ...messagesByChat,
-              };
-
-            delete updated[
-              chatName
-            ];
-
-            setMessagesByChat(
-              updated
-            );
-
             setOpenMenu(
               null
             );
 
             if (
               selectedChat ===
-              chatName
+              chatName.id
             ) {
               setSelectedChat(
                 null
@@ -1619,13 +1637,13 @@ transform:
             e.stopPropagation();
 
             const confirmed =
-              confirm(
-  `Block ${
-    chatName.startsWith("🏠") ||
-    chatName.startsWith("👥")
-      ? chatName
-      : `@${chatName}`
-  }?`
+  confirm(
+`Block ${
+  chatName.display_name.startsWith("🏠") ||
+  chatName.display_name.startsWith("👥")
+    ? chatName.display_name
+    : `@${chatName.display_name}`
+}?`
 );
 
             if (
@@ -1633,25 +1651,12 @@ transform:
             )
               return;
 
-            const updated =
-              {
-                ...messagesByChat,
-              };
-
-            delete updated[
-              chatName
-            ];
-
-            setMessagesByChat(
-              updated
-            );
-
             setPinnedChats(
               (prev) =>
                 prev.filter(
                   (c) =>
                     c !==
-                    chatName
+                    chatName.id
                 )
             );
 
@@ -1660,21 +1665,21 @@ transform:
             );
 
             if (
-              selectedChat ===
-              chatName
-            ) {
-              setSelectedChat(
-                null
-              );
-            }
+  selectedChat ===
+  chatName.id
+) {
+  setSelectedChat(
+    null
+  );
+}
 
             alert(
-  `${
-    chatName.startsWith("🏠") ||
-    chatName.startsWith("👥")
-      ? chatName
-      : `@${chatName}`
-  } blocked`
+`${
+  chatName.display_name.startsWith("🏠") ||
+  chatName.display_name.startsWith("👥")
+    ? chatName.display_name
+    : `@${chatName.display_name}`
+} blocked`
 );
           }}
           style={{
@@ -1706,10 +1711,10 @@ transform:
 
             alert(
   `🚩 Reported ${
-    chatName.startsWith("🏠") ||
-    chatName.startsWith("👥")
+    chatName.display_name.startsWith("🏠") ||
+    chatName.display_name.startsWith("👥")
       ? chatName
-      : `@${chatName}`
+      : `@${chatName.display_name}`
   }`
 );
 
@@ -1761,20 +1766,9 @@ transform:
       flex: 1,
     }}
   >
-    {(
-      messagesByChat[chatName]
-        ?.slice(-1)[0]
-        ?.text ||
-      "No messages yet"
-    ).slice(0, 42)}
-
-    {(
-      messagesByChat[chatName]
-        ?.slice(-1)[0]
-        ?.text || ""
-    ).length > 42
-      ? "..."
-      : ""}
+    {conversationPreviews[
+  chatName.id
+]?.body || "No messages yet"}
   </div>
 
   {/* right side */}
@@ -1788,9 +1782,9 @@ transform:
   >
     {/* unread indicator */}
     {selectedChat !==
-  chatName &&
+  chatName.id &&
   unreadChats[
-    chatName
+    chatName.id
   ] > 0 && (
     <div
       style={{
@@ -1813,7 +1807,7 @@ transform:
     >
       {
         unreadChats[
-          chatName
+          chatName.id
         ]
       }
     </div>
@@ -1825,11 +1819,7 @@ transform:
         fontSize: 11,
       }}
     >
-      {
-        messagesByChat[chatName]
-          ?.slice(-1)[0]
-          ?.time
-      }
+      --
     </div>
   </div>
       </div>
@@ -1959,12 +1949,7 @@ transform:
     whiteSpace: "nowrap",
   }}
 >
-  {
-    selectedChat?.startsWith("🏠") ||
-    selectedChat?.startsWith("👥")
-      ? selectedChat
-      : `@${selectedChat}`
-  }
+  {chatDisplayName}
 </span>
 </div>
 
@@ -2003,46 +1988,6 @@ setShowScrollBottom(
       "column",
   }}
 >
-{selectedChat &&
-requestStatusByChat[
-  selectedChat
-] === false && (
-  <div
-    style={{
-      background:
-        "#151520",
-      border:
-        "1px solid #222",
-      borderRadius: 18,
-      padding: 18,
-      marginBottom: 18,
-      color: "#aaa",
-      textAlign:
-        "center",
-      lineHeight: 1.6,
-    }}
-  >
-    <div
-      style={{
-        color:
-          "#39FF88",
-        fontWeight: 700,
-        marginBottom: 8,
-      }}
-    >
-      Message Request
-    </div>
-
-    This account is private.
-    <br />
-    You can send one
-    request message.
-    <br />
-    The other person
-    chooses whether
-    to reply.
-      </div>
-    )}
 <div
   style={{
     width: "100%",
@@ -2136,15 +2081,6 @@ setShowScrollBottom(false);
 <MessageInput
   selectedChat={
     selectedChat
-  }
-  requestStatusByChat={
-    requestStatusByChat
-  }
-  messagesByChat={
-    messagesByChat
-  }
-  chatAccess={
-    chatAccess
   }
   messageText={
     messageText

@@ -1,28 +1,6 @@
 type MessageInputProps = {
   selectedChat: string | null;
 
-  requestStatusByChat:
-    Record<string, boolean>;
-
-  messagesByChat: Record<
-    string,
-    {
-      sender:
-        | "me"
-        | "them";
-
-      text: string;
-
-      time: string;
-
-      status?: string;
-    }[]
-  >;
-
-  chatAccess:
-    | "open"
-    | "request";
-
   messageText: string;
 
   setMessageText:
@@ -35,13 +13,11 @@ type MessageInputProps = {
 
 export default function MessageInput({
   selectedChat,
-  requestStatusByChat,
-  messagesByChat,
-  chatAccess,
   messageText,
   setMessageText,
   onSend,
 }: MessageInputProps) {
+
   return (
     <div
       style={{
@@ -71,34 +47,13 @@ export default function MessageInput({
         id="message-input"
         name="messageInput"
         value={messageText}
-        disabled={
-          selectedChat &&
-          requestStatusByChat[
-            selectedChat
-          ] === false &&
-          (
-            messagesByChat[
-              selectedChat
-            ]?.filter(
-              (m) =>
-                m.sender ===
-                "me"
-            ).length || 0
-          ) > 0
-        }
+        disabled={false}
         onChange={(e) =>
           setMessageText(
             e.target.value
           )
         }
-        placeholder={
-          selectedChat &&
-          requestStatusByChat[
-            selectedChat
-          ] === false
-            ? "Send message request..."
-            : "Type a message..."
-        }
+        placeholder="Type a message..."
         style={{
           flex: 1,
           minWidth: 0,
@@ -113,31 +68,19 @@ export default function MessageInput({
       />
 
       <button
-        onClick={onSend}
-        style={{
-          padding:
-            "12px 20px",
-
-          borderRadius: 18,
-
-          border: "none",
-
-          background:
-            "#39FF88",
-
-          color: "#000",
-
-          fontWeight: 700,
-
-          cursor: "pointer",
-        }}
-      >
-        {selectedChat &&
-        requestStatusByChat[
-          selectedChat
-        ] === false
-          ? "Request"
-          : "Message"}
+  onClick={onSend}
+  style={{
+    flexShrink: 0,
+    padding: "12px 20px",
+    borderRadius: 18,
+    border: "none",
+    background: "#39FF88",
+    color: "#000",
+    fontWeight: 700,
+    cursor: "pointer",
+  }}
+>
+        Message
       </button>
     </div>
   );
