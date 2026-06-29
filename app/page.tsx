@@ -13,7 +13,7 @@ import {
   LogOut,
 } from "lucide-react";
 
-import { supabase } from "../lib/supabase";
+import { supabase } from "../lib/supabase-browser";
 import { User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 

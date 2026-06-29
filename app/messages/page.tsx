@@ -11,7 +11,7 @@ import {
   useSearchParams,
 } from "next/navigation";
 import { User } from "@supabase/supabase-js";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "../../lib/supabase-browser";
 
 import MessageBubble from "./components/MessageBubble";
 import MessageInput from "./components/MessageInput";
@@ -648,6 +648,14 @@ useEffect(() => {
 useEffect(() => {
   if (!selectedChat || !user) return;
 
+  async function refreshSidebar() {
+    await Promise.all(
+      conversations.map((chat) =>
+        loadConversationPreview(chat.id)
+      )
+    );
+  }
+
   const channel = supabase
     .channel("messages-realtime")
     .on(
@@ -657,8 +665,20 @@ useEffect(() => {
         schema: "public",
         table: "direct_messages",
       },
-      () => {
-        loadConversation(selectedChat);
+      async (payload) => {
+        console.log("Realtime message received", payload);
+
+        const msg = payload.new as any;
+
+        if (
+          msg.sender_id !== user.id &&
+          msg.receiver_id !== user.id
+        ) {
+          return;
+        }
+
+        await loadConversation(selectedChat);
+        await refreshSidebar();
       }
     )
     .subscribe();
@@ -666,7 +686,7 @@ useEffect(() => {
   return () => {
     supabase.removeChannel(channel);
   };
-}, [selectedChat, user]);
+}, [selectedChat, user, conversations]);
 
 useEffect(() => {
   if (!user) return;
@@ -836,6 +856,10 @@ const handleSendMessage = async () => {
   );
 
   await loadConversation(
+    selectedChat
+  );
+
+  await loadConversationPreview(
     selectedChat
   );
 

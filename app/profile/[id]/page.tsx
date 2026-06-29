@@ -13,7 +13,7 @@
   } from "next/navigation";
 
   import { supabase }
-    from "../../../lib/supabase";
+    from "../../../lib/supabase-browser";
 
 import { User }
   from "@supabase/supabase-js";

@@ -5,7 +5,7 @@ import React, {
   useState,
 } from "react";
 
-import { supabase } from "../../lib/supabase";
+import { supabase } from "../../lib/supabase-browser";
 import { useRouter } from "next/navigation";
 
 export default function SignInPage() {
@@ -83,8 +83,7 @@ if (
         {
           provider: "google",
           options: {
-            redirectTo:
-              `${window.location.origin}`,
+            redirectTo: `${window.location.origin}/auth/callback`,
           },
         }
       );

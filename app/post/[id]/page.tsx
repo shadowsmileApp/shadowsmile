@@ -5,7 +5,7 @@ import {
   useParams,
   useRouter,
 } from "next/navigation";
-import { supabase } from "../../../lib/supabase";
+import { supabase } from "../../../lib/supabase-browser";
 import { Heart, MessageSquare } from "lucide-react";
 
 type Post = {

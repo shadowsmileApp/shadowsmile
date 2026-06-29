@@ -1,5 +1,7 @@
 "use client";
 
+import { supabase } from "../../lib/supabase-browser";
+
 export default function SettingsPage() {
 return (
 <main
@@ -71,37 +73,6 @@ Settings </h1>
       <button
 onClick={() =>
   window.location.href =
-    "/settings/account"
-}
-  style={{
-    width: "100%",
-    background: "transparent",
-    border: "none",
-    color: "#fff",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    cursor: "pointer",
-    fontSize: 18,
-    fontWeight: 700,
-  }}
->
-  <span>Account</span>
-  <span>›</span>
-</button>
-    </div>
-
-    <div
-      style={{
-        background: "#15151A",
-        border: "1px solid #25252D",
-        borderRadius: 16,
-        padding: 16,
-      }}
-    >
-      <button
-onClick={() =>
-  window.location.href =
     "/settings/privacy"
 }
   style={{
@@ -156,8 +127,32 @@ onClick={() =>
 >
   <h2>Danger Zone</h2>
 
-  <button
-    style={{
+<button
+  onClick={async () => {
+  const confirmed = window.confirm(
+    "This permanently deletes your Shadow Smile account and cannot be undone."
+  );
+
+  if (!confirmed) return;
+
+  const response = await fetch("/api/delete-account", {
+    method: "POST",
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    alert(result.error ?? "Failed to delete account.");
+    return;
+  }
+
+  await supabase.auth.signOut({
+    scope: "global",
+  });
+
+  window.location.replace("/signin");
+}}
+  style={{
       width: "100%",
       height: 48,
       borderRadius: 12,

@@ -1,6 +1,7 @@
 import "./globals.css";
 import Providers from "./providers";
 import LayoutShell from "./components/LayoutShell";
+import AuthListener from "./components/AuthListener";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,8 @@ export default function RootLayout({
         }}
       >
         <Providers>
+  <AuthListener />
+
   <LayoutShell>
     {children}
   </LayoutShell>

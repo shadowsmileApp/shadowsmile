@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../lib/supabase-browser";
 
 type UserContextType = {
   user: any;
@@ -26,18 +26,32 @@ export default function Providers({
   const [loading, setLoading] = useState(true);
 
   async function getUser() {
-    const { data } = await supabase.auth.getUser();
-    setUser(data?.user || null);
+  const { data, error } = await supabase.auth.getUser();
+
+  if (error || !data?.user) {
+    setUser(null);
     setLoading(false);
+    return;
   }
+
+  setUser(data.user);
+  setLoading(false);
+}
 
   useEffect(() => {
     getUser();
 
     const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user || null);
-      }
+      (event, session) => {
+
+  if (event === "SIGNED_OUT") {
+    setUser(null);
+  }
+
+  if (event === "SIGNED_IN") {
+    setUser(session?.user || null);
+  }
+}
     );
 
     return () => {

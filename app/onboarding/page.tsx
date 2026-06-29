@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "../../lib/supabase-browser";
 
 export default function OnboardingPage() {
 const router = useRouter();
@@ -208,8 +208,6 @@ step === 1
     return;
   }
 
-  console.log("Saving onboarding for user:", user.id);
-
 const { data, error } = await supabase
   .from("profiles")
   .update({
@@ -223,14 +221,9 @@ const { data, error } = await supabase
   .eq("id", user.id)
   .select();
 
-console.log("Update result:", data);
-console.log("Update error:", error);
-
   if (error) {
     console.error(error);
-    alert(
-      "Failed to save onboarding."
-    );
+    alert("Failed to save onboarding.");
     return;
   }
 

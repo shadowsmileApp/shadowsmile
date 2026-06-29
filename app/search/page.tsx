@@ -10,7 +10,7 @@ import {
 } from "next/navigation";
 
 import { supabase }
-  from "../../lib/supabase";
+  from "../../lib/supabase-browser";
 
 export default function SearchPage() {
   const router =
