@@ -38,6 +38,10 @@ type Profile = {
   id: string;
   handle: string | null;
   display_name: string | null;
+
+  first_name: string | null;
+  last_name: string | null;
+
   bio: string | null;
   avatar_url: string | null;
   role: string | null;
@@ -181,14 +185,16 @@ useEffect(() => {
       await supabase
         .from("profiles")
         .select(`
-          id,
-          handle,
-          display_name,
-          bio,
-          avatar_url,
-          role,
-          created_at
-        `)
+  id,
+  handle,
+  display_name,
+  first_name,
+  last_name,
+  bio,
+  avatar_url,
+  role,
+  created_at
+`)
         .eq("id", id)
         .maybeSingle();
     if (error) {
@@ -471,9 +477,9 @@ setSocialStats((prev) => ({
   /* ================= HANDLE ================= */
 
 const displayName =
-  profile?.display_name?.trim()
-    ? profile.display_name
-    : "ShadowSmile Member";
+  `${profile?.first_name ?? ""} ${profile?.last_name ?? ""}`.trim() ||
+  profile?.display_name?.trim() ||
+  "ShadowSmile Member";
 
 const profileBio =
   profile?.bio?.trim()
@@ -486,14 +492,6 @@ const profileBio =
       : `@member${profile?.id?.slice(0, 4) || "0000"}`;
 
   const isOwnProfile = currentUser?.id === profile?.id;
-
-const counterNumberStyle = {
-  ...styles.counterNumber,
-  fontSize:
-    isMobile
-      ? 22
-      : 28,
-};
 
   /* ================= LOADING ================= */
 
@@ -575,9 +573,9 @@ if (!currentUser) {
             fontSize: 28,
           }}
         >
-          {displayHandle
-            .charAt(1)
-            .toUpperCase()}
+          {displayName
+  .charAt(0)
+  .toUpperCase()}
         </div>
       )}
     </div>
@@ -634,7 +632,7 @@ onClick={() =>
     <div
       style={{
         fontWeight: 800,
-        fontSize: 18,
+        fontSize: 20,
       }}
     >
       {socialStats.followers}
@@ -665,7 +663,7 @@ onClick={() =>
   <div
     style={{
       fontWeight: 800,
-      fontSize: 18,
+      fontSize: 20,
       textAlign: "center",
     }}
   >
@@ -697,7 +695,7 @@ onClick={() =>
   <div
     style={{
       fontWeight: 800,
-      fontSize: 18,
+      fontSize: 20,
     }}
   >
     {socialStats.following}
@@ -758,20 +756,57 @@ onClick={() =>
     </button>
   )}
 </div>
-<div style={styles.mobileMetaRow}>
 
-  <div style={styles.mobileMetaItem}>
-    Member since{" "}
-    {profile?.created_at
-      ? new Date(
-          profile.created_at
-        ).toLocaleDateString()
-      : "Unknown"}
+    {!isOwnProfile && (
+  <div style={styles.mobileActionButtons}>
+    <button
+      style={{
+        ...styles.followBtn,
+        background: isFollowing
+          ? "#1C1C24"
+          : "linear-gradient(135deg,#7B2FFF,#9B5DFF)",
+        border: isFollowing
+          ? "1px solid #333"
+          : "none",
+      }}
+      onClick={toggleFollow}
+      disabled={followLoading}
+    >
+      {followLoading
+        ? "Loading..."
+        : isFollowing
+        ? "Following"
+        : "Follow"}
+    </button>
+
+    <button
+  type="button"
+  style={styles.messageBtn}
+      onClick={() =>
+  router.push(`/messages?user=${profile.id}`)
+}
+    >
+      Message User
+        </button>
   </div>
+)}
 
-  {["admin", "founder"].includes(
-    profile?.role || ""
-  ) && (
+<div
+  style={{
+    color: "#888",
+    marginTop: 16,
+    fontSize: 13,
+    textAlign: "center",
+  }}
+>
+  ShadowSmile member since{" "}
+  {profile?.created_at
+    ? new Date(profile.created_at).toLocaleDateString()
+    : "Unknown"}
+</div>
+
+<div style={styles.mobileMetaRow}>
+  {["admin", "founder"].includes(profile?.role || "") && (
     <div style={styles.mobileMetaItem}>
       Founder
     </div>
@@ -780,24 +815,19 @@ onClick={() =>
   {isOwnProfile && (
     <button
       style={styles.mobileSettingsBtn}
-      onClick={() =>
-        router.push("/settings")
-      }
+      onClick={() => router.push("/settings")}
     >
       <Settings size={18} />
     </button>
   )}
-
 </div>
+
 </>
 ) : (
   <div
   style={{
     ...styles.profileGrid,
-    gridTemplateColumns:
-      isMobile
-        ? "1fr"
-        : "190px 1fr",
+    gridTemplateColumns: "190px 1fr",
   }}
 >
     
@@ -805,18 +835,15 @@ onClick={() =>
     <div
   style={{
     ...styles.avatarColumn,
-    width:
-      isMobile
-        ? "100%"
-        : "auto",
+       width : "auto",
   }}
 >
       <div
   style={{
     ...styles.avatarLarge,
-    width: isMobile ? 120 : 170,
-    height: isMobile ? 120 : 170,
-    fontSize: isMobile ? 34 : 48,
+    width: 170,
+    height: 170,
+    fontSize: 48,
   }}
 >
         {profile?.avatar_url ? (
@@ -829,7 +856,7 @@ onClick={() =>
             style={styles.avatarImage}
           />
         ) : (
-          displayHandle.charAt(1).toUpperCase()
+          displayName.charAt(0).toUpperCase()
         )}
       </div>
 
@@ -842,6 +869,7 @@ onClick={() =>
     Settings
   </button>
 )}
+
 
 {!isOwnProfile ? (
   <>
@@ -861,8 +889,8 @@ onClick={() =>
       {followLoading
         ? "Loading..."
         : isFollowing
-        ? "Connected"
-        : "Connect"}
+        ? "Following"
+        : "Follow"}
     </button>
 
     <button
@@ -875,17 +903,15 @@ onClick={() =>
       Message User
     </button>
   </>
-) : null}
+) : 
+null}
     </div>
 
     {/* RIGHT SIDE */}
     <div
   style={{
     ...styles.profileContent,
-    textAlign:
-      isMobile
-        ? "center"
-        : "left",
+    textAlign: "left",
   }}
 >
       
@@ -894,10 +920,7 @@ onClick={() =>
         <div
   style={{
     ...styles.identityRow,
-    justifyContent:
-      isMobile
-        ? "center"
-        : "flex-start",
+    justifyContent: "flex-start",
   }}
 >
           <h1 style={styles.displayName}>
@@ -920,10 +943,7 @@ onClick={() =>
         <p
   style={{
     ...styles.memberSince,
-    textAlign:
-      isMobile
-        ? "center"
-        : "left",
+    textAlign: "left",
   }}
 >
           ShadowSmile member since{" "}
@@ -950,7 +970,7 @@ type="button"
     alert("Followers list coming soon")
   }
 >
-    <span style={counterNumberStyle}>
+    <span style={styles.counterNumber}>
       {socialStats.followers}
     </span>
 
@@ -966,7 +986,7 @@ type="button"
     alert("Posts are below")
   }
 >
-  <span style={counterNumberStyle}>
+  <span style={styles.counterNumber}>
     {stats.postCount}
   </span>
 
@@ -982,7 +1002,7 @@ type="button"
     alert("Following list coming soon")
   }
 >
-  <span style={counterNumberStyle}>
+  <span style={styles.counterNumber}>
     {socialStats.following}
   </span>
 
@@ -999,10 +1019,7 @@ type="button"
     ...styles.bio,
     display: "-webkit-box",
     WebkitBoxOrient: "vertical",
-    WebkitLineClamp:
-      !bioExpanded && isMobile
-        ? 3
-        : "unset",
+    WebkitLineClamp: !bioExpanded ? 3 : "unset",
     overflow: "hidden",
   }}
 >
@@ -1013,9 +1030,7 @@ type="button"
       <button
         style={styles.bioExpandBtn}
         onClick={() =>
-          setBioExpanded(
-            !bioExpanded
-          )
+          setBioExpanded(!bioExpanded)
         }
       >
         {bioExpanded
@@ -1027,21 +1042,18 @@ type="button"
 
       {/* EDIT PROFILE */}
       {false && isOwnProfile && (
-        <button
-  style={{
-    ...styles.editButton,
-    width:
-      isMobile
-        ? "100%"
-        : "auto",
-  }}
-          onClick={() =>
-  router.push("/settings/profile")
-}
-        >
-          Edit Profile
-        </button>
-      )}
+  <button
+    style={{
+      ...styles.editButton,
+      width: "auto",
+    }}
+    onClick={() =>
+      router.push("/settings/profile")
+    }
+  >
+    Edit Profile
+  </button>
+)}
 
     </div>
   </div>
@@ -1264,8 +1276,9 @@ counterCard: {
 },
 
 counterNumber: {
-  fontSize: 28,
+  fontSize: 30,
   fontWeight: 800,
+  lineHeight: 1,
 },
 
 counterLabel: {
@@ -1433,6 +1446,13 @@ mobileSettingsBtn: {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
+},
+
+mobileActionButtons: {
+  display: "flex",
+  flexDirection: "column",
+  gap: 12,
+  marginTop: 16,
 },
 
   actionBtn: {

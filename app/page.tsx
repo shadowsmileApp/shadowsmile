@@ -10,7 +10,6 @@ import {
   Share2,
   Sparkles,
   LogIn,
-  LogOut,
 } from "lucide-react";
 
 import { supabase } from "../lib/supabase-browser";
@@ -353,14 +352,6 @@ loadPosts();
     }
   }
 
-  /* ================= SIGN OUT ================= */
-
-  async function handleLogout() {
-    await supabase.auth.signOut();
-    router.refresh();
-    window.location.reload();
-  }
-
   /* ================= LOADING ================= */
 
   if (loading) {
@@ -400,23 +391,15 @@ if (!user) {
         </div>
 
         <div style={styles.right}>
-          {!user ? (
-            <button
-              style={styles.market}
-              onClick={() => router.push("/signin")}
-            >
-              <LogIn size={14} />
-              Sign In
-            </button>
-          ) : (
-            <button
-              style={styles.market}
-              onClick={handleLogout}
-            >
-              <LogOut size={14} />
-              Sign Out
-            </button>
-          )}
+          {!user && (
+  <button
+    style={styles.market}
+    onClick={() => router.push("/signin")}
+  >
+    <LogIn size={14} />
+    Sign In
+  </button>
+)}
 
           <button
             style={styles.market}

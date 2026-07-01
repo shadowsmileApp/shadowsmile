@@ -1,8 +1,19 @@
 "use client";
 
 import { supabase } from "../../lib/supabase-browser";
+import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
+const router = useRouter();
+
+async function handleLogout() {
+  await supabase.auth.signOut({
+    scope: "global",
+  });
+
+  window.location.replace("/signin");
+}
+
 return (
 <main
 style={{
@@ -63,13 +74,41 @@ Settings </h1>
     </div>
 
     <div
-      style={{
-        background: "#15151A",
-        border: "1px solid #25252D",
-        borderRadius: 16,
-        padding: 16,
-      }}
-    >
+  style={{
+    background: "#15151A",
+    border: "1px solid #25252D",
+    borderRadius: 16,
+    padding: 16,
+  }}
+>
+  <button
+    onClick={() => (window.location.href = "/settings/account")}
+    style={{
+      width: "100%",
+      background: "transparent",
+      border: "none",
+      color: "#fff",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      cursor: "pointer",
+      fontSize: 18,
+      fontWeight: 700,
+    }}
+  >
+    <span>Account</span>
+    <span>›</span>
+  </button>
+</div>
+
+<div
+  style={{
+    background: "#15151A",
+    border: "1px solid #25252D",
+    borderRadius: 16,
+    padding: 16,
+  }}
+>
       <button
 onClick={() =>
   window.location.href =
@@ -102,7 +141,8 @@ onClick={() =>
   }}
 >
   <button
-    style={{
+  onClick={handleLogout}
+  style={{
       width: "100%",
       height: 48,
       borderRadius: 12,
