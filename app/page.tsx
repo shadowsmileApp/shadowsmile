@@ -60,19 +60,10 @@ export default function Page() {
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
-const [role, setRole] = useState("");
-
-  const [mode, setMode] = useState<"structured" | "normal">("structured");
-
-  const [shadow, setShadow] = useState("");
-  const [smile, setSmile] = useState("");
-  const [text, setText] = useState("");
+  const [role, setRole] = useState("");
 
   const [openComments, setOpenComments] = useState<string | null>(null);
   const [commentTexts, setCommentTexts] = useState<Record<string, string>>({});
-
-  const [isAnonymous, setIsAnonymous] =
-    useState(false);
 
   /* ================= USER ================= */
 
@@ -199,69 +190,6 @@ useEffect(() => {
       checkMobile
     );
 }, []);
-
-  /* ================= CREATE POST ================= */
-
-  async function createPost() {
-    if (!user) {
-      router.push("/signin");
-      return;
-    }
-
-
-  // Prevent empty posts
-  if (
-    mode === "structured" &&
-    !shadow.trim() &&
-    !smile.trim()
-  ) {
-    return;
-  }
-
-  if (
-    mode === "normal" &&
-    !text.trim()
-  ) {
-    return;
-  }
-
-    const payload =
-  mode === "structured"
-    ? {
-        user_id: user.id,
-        post_type: "flip",
-        shadow_text: shadow,
-        smile_text: smile,
-        content: null,
-
-        // ShadowSmile privacy
-        is_anonymous: isAnonymous,
-      }
-    : {
-        user_id: user.id,
-        post_type: "normal",
-        content: text,
-        shadow_text: null,
-        smile_text: null,
-
-        // ShadowSmile privacy
-        is_anonymous: isAnonymous,
-      };
-
-    const { error } = await supabase.from("posts").insert(payload);
-
-    if (error) {
-      console.error(error);
-      return;
-    }
-
-    setShadow("");
-    setSmile("");
-    setText("");
-    setIsAnonymous(false);
-
-    loadPosts();
-  }
 
   /* ================= LIKE ================= */
 
@@ -454,124 +382,7 @@ if (!user) {
           </button>
         )}
 
-        <div style={styles.toggleRow}>
-          <button
-            onClick={() => setMode("structured")}
-            style={{
-              ...styles.toggleBtn,
-              background:
-                mode === "structured"
-                  ? "linear-gradient(135deg,#7B2FFF,#8F3FFF)"
-                  : "transparent",
-              border:
-                mode === "structured"
-                  ? "1px solid #7B2FFF"
-                  : "1px solid #333",
-              boxShadow:
-                mode === "structured"
-                  ? "0 0 20px rgba(123,47,255,.35)"
-                  : "none",
-            }}
-          >
-            Shadow / Smile
-          </button>
-
-          <button
-            onClick={() => setMode("normal")}
-            style={{
-              ...styles.toggleBtn,
-              background:
-                mode === "normal"
-                  ? "#141414"
-                  : "transparent",
-              border:
-                mode === "normal"
-                  ? "1px solid #444"
-                  : "1px solid #333",
-              color: "#EAEAF0",
-            }}
-          >
-            Normal
-          </button>
-        </div>
       </section>
-
-      {/* CREATE POST */}
-      {user && (
-        <section
-  style={{
-    ...styles.createBox,
-    margin: isMobile
-      ? "0 12px 24px"
-      : "0 auto 24px",
-    padding: isMobile ? 16 : 20,
-  }}
->
-          {mode === "structured" ? (
-            <>
-              <input
-                placeholder="Shadow thought..."
-                value={shadow}
-                onChange={(e) => setShadow(e.target.value)}
-                style={{
-  ...styles.input,
-  padding: isMobile ? 12 : 16,
-}}
-              />
-
-              <input
-                placeholder="What helped?"
-                value={smile}
-                onChange={(e) => setSmile(e.target.value)}
-                style={{
-  ...styles.input,
-  padding: isMobile ? 12 : 16,
-}}
-              />
-            </>
-          ) : (
-            <textarea
-              placeholder="What's on your mind?"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              style={{
-  ...styles.input,
-  padding: isMobile ? 12 : 16,
-}}
-            />
-          )}
-
-          <div
-  style={{
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 14,
-  }}
->
-  <input
-    type="checkbox"
-    checked={isAnonymous}
-    onChange={(e) =>
-      setIsAnonymous(e.target.checked)
-    }
-  />
-
-  <span
-    style={{
-      color: "#aaa",
-      fontSize: 14,
-    }}
-  >
-    Post anonymously
-  </span>
-</div>
-
-          <button onClick={createPost} style={styles.postBtn}>
-            Post
-          </button>
-        </section>
-      )}
 
       {/* FEED */}
       <section
@@ -818,65 +629,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 12,
     marginBottom: 10,
     display: "inline-block",
-  },
-
-  toggleRow: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: 12,
-    marginTop: 20,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  toggleBtn: {
-    padding: "10px 18px",
-    borderRadius: 16,
-    border: "1px solid #333",
-    background: "transparent",
-    color: "#EAEAF0",
-    fontSize: 15,
-    fontWeight: 500,
-    minWidth: 120,
-  },
-
-  createBox: {
-    maxWidth: 620,
-    margin: "0 auto 24px",
-    padding: 20,
-    background: "rgba(255,255,255,0.03)",
-    border: "1px solid rgba(255,255,255,0.06)",
-    borderRadius: 24,
-    backdropFilter: "blur(18px)",
-    boxShadow:
-      "0 10px 40px rgba(0,0,0,0.35)",
-  },
-
-  input: {
-    width: "100%",
-    boxSizing: "border-box",
-    padding: 16,
-    marginBottom: 12,
-    borderRadius: 18,
-    background: "#0E0E14",
-    border: "1px solid #23232D",
-    color: "#fff",
-    fontSize: 15,
-  },
-
-  postBtn: {
-    width: "100%",
-    padding: 14,
-    borderRadius: 18,
-    border: "none",
-    background:
-      "linear-gradient(135deg,#7B2FFF,#39FF88)",
-    color: "#fff",
-    fontWeight: 800,
-    fontSize: 15,
-    cursor: "pointer",
-    boxShadow:
-      "0 8px 24px rgba(123,47,255,.25)",
   },
 
   feed: {

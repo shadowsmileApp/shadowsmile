@@ -38,11 +38,15 @@ export default function LayoutShell({
     observer.disconnect();
 }, []);
 
-  const hideNav =
-    pathname === "/signin" ||
-    pathname === "/reset-password" ||
-    pathname === "/onboarding" ||
-    hideMessagesNav;
+  const showBottomNav =
+  pathname === "/" ||
+  pathname === "/search" ||
+  pathname === "/create" ||
+  pathname === "/messages" ||
+  pathname.startsWith("/profile/");
+
+const hideNav =
+  !showBottomNav || hideMessagesNav;
 
   return (
     <>

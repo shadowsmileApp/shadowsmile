@@ -58,35 +58,37 @@ setBirthday(data?.date_of_birth ?? "");
   style={{
     display: "flex",
     alignItems: "center",
-    gap: 12,
-    marginBottom: 20,
+    gap: 16,
+    marginBottom: 8,
   }}
 >
   <button
     onClick={() => router.push("/settings")}
     style={{
-      background: "transparent",
-      border: "1px solid #2A2A33",
-      color: "#fff",
-      padding: "8px 14px",
-      borderRadius: 10,
-      cursor: "pointer",
-      fontSize: 14,
-      fontWeight: 600,
-    }}
+  width: 42,
+  height: 42,
+  borderRadius: 12,
+  border: "1px solid #25252D",
+  background: "#15151A",
+  color: "#fff",
+  cursor: "pointer",
+  fontSize: 20,
+  fontWeight: 700,
+  flexShrink: 0,
+}}
   >
-    ← Back
+    ←
   </button>
 
   <h1
-    style={{
-      margin: 0,
-      fontSize: 28,
-      fontWeight: 800,
-    }}
-  >
-    Account
-  </h1>
+  style={{
+    margin: 0,
+    fontSize: 28,
+    fontWeight: 800,
+  }}
+>
+  Account Settings
+</h1>
 </div>
 
 <p

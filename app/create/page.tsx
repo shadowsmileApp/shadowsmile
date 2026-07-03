@@ -140,14 +140,31 @@ if (loading) {
 
   return (
     <main style={styles.page}>
-      <h1 style={styles.title}>Create Post</h1>
+<section style={styles.hero}>
+  <div style={styles.badge}>
+    Platform Core
+  </div>
+
+  <h2 style={styles.heroTitle}>
+    Express the Shadow.
+    <br />
+    Share the Smile.
+  </h2>
+
+  <p style={styles.heroText}>
+    A safe social space for honesty, support, healing, and connection.
+  </p>
+</section>
+
+      {/* INPUTS */}
+      <div style={styles.createBox}>
 
       {/* MODE SWITCH */}
-      <div style={styles.toggleRow}>
+      <div style={styles.modeButtons}>
         <button
           onClick={() => setMode("structured")}
           style={{
-            ...styles.toggleBtn,
+            ...styles.modeButton,
             background: mode === "structured" ? "#7B2FFF" : "#111",
           }}
         >
@@ -157,7 +174,7 @@ if (loading) {
         <button
           onClick={() => setMode("normal")}
           style={{
-            ...styles.toggleBtn,
+            ...styles.modeButton,
             background: mode === "normal" ? "#39FF88" : "#111",
             color: mode === "normal" ? "#000" : "#fff",
           }}
@@ -166,12 +183,10 @@ if (loading) {
         </button>
       </div>
 
-      {/* INPUTS */}
-      <div style={styles.box}>
         {mode === "structured" ? (
           <>
             <input
-              placeholder="Shadow thought..."
+              placeholder="What's weighing on you?"
               value={shadow}
               onChange={(e) => setShadow(e.target.value)}
               style={styles.input}
@@ -186,7 +201,7 @@ if (loading) {
           </>
         ) : (
           <textarea
-            placeholder="What's on your mind?"
+            placeholder="Write something..."
             value={text}
             onChange={(e) => setText(e.target.value)}
             style={styles.textarea}
@@ -194,7 +209,8 @@ if (loading) {
         )}
 
         {/* BUTTON */}
-<div
+{mode === "structured" && (
+  <div
   style={{
     display: "flex",
     alignItems: "center",
@@ -219,7 +235,9 @@ if (loading) {
     Post anonymously
   </span>
 </div>
-        <button onClick={createPost} style={styles.button}>
+)}
+
+        <button onClick={createPost} style={styles.postButton}>
           {loading ? "Posting..." : "Post"}
         </button>
       </div>
@@ -238,62 +256,94 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: "system-ui",
   },
 
-  title: {
-    fontSize: 28,
-    fontWeight: 800,
-    marginBottom: 20,
-  },
+hero: {
+  padding: "20px 20px 30px",
+  textAlign: "center",
+},
 
-  toggleRow: {
-    display: "flex",
-    gap: 10,
-    marginBottom: 20,
-  },
+heroTitle: {
+  fontSize: 34,
+  fontWeight: 900,
+},
 
-  toggleBtn: {
-    flex: 1,
-    padding: 10,
-    borderRadius: 10,
-    border: "1px solid #333",
-    color: "#fff",
-    cursor: "pointer",
-  },
+heroText: {
+  color: "#aaa",
+  marginTop: 10,
+},
 
-  box: {
-    maxWidth: 500,
-    margin: "0 auto",
-  },
+badge: {
+  display: "inline-flex",
+  gap: 6,
+  marginBottom: 10,
+  border: "1px solid #333",
+  padding: "4px 10px",
+  borderRadius: 999,
+},
+
+  modeButtons: {
+  display: "flex",
+  gap: 10,
+  marginBottom: 16,
+},
+
+  modeButton: {
+  flex: 1,
+  padding: "12px",
+  borderRadius: 12,
+  border: "1px solid #333",
+  color: "#fff",
+  cursor: "pointer",
+  fontWeight: 700,
+  transition: "all .2s ease",
+},
+
+  createBox: {
+  maxWidth: 600,
+  margin: "0 auto 40px",
+  padding: 18,
+  borderRadius: 22,
+  background: "linear-gradient(180deg,#111,#0D0D12)",
+  border: "1px solid #222",
+},
 
   input: {
-    width: "100%",
-    boxSizing: "border-box",
-    padding: 12,
-    marginBottom: 10,
-    borderRadius: 10,
-    background: "#111",
-    border: "1px solid #222",
-    color: "#fff",
-  },
+  width: "100%",
+  boxSizing: "border-box",
+  padding: 14,
+  marginBottom: 12,
+  borderRadius: 12,
+  background: "#111",
+  border: "1px solid #222",
+  color: "#fff",
+  outline: "none",
+  fontSize: 15,
+},
 
   textarea: {
-    width: "100%",
-    boxSizing: "border-box",
-    minHeight: 120,
-    padding: 12,
-    borderRadius: 10,
-    background: "#111",
-    border: "1px solid #222",
-    color: "#fff",
-  },
+  width: "100%",
+  boxSizing: "border-box",
+  minHeight: 140,
+  padding: 14,
+  borderRadius: 12,
+  background: "#111",
+  border: "1px solid #222",
+  color: "#fff",
+  outline: "none",
+  fontSize: 15,
+  resize: "vertical",
+},
 
-  button: {
-    width: "100%",
-    marginTop: 10,
-    padding: 12,
-    borderRadius: 12,
-    background: "linear-gradient(135deg,#7B2FFF,#39FF88)",
-    fontWeight: 800,
-    border: "none",
-    cursor: "pointer",
-  },
+  postButton: {
+  width: "100%",
+  marginTop: 16,
+  padding: 14,
+  borderRadius: 14,
+  background: "linear-gradient(135deg,#7B2FFF,#39FF88)",
+  color: "#fff",
+  fontWeight: 800,
+  fontSize: 15,
+  border: "none",
+  cursor: "pointer",
+  transition: "all .2s ease",
+},
 };

@@ -1,10 +1,27 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase-browser";
 import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
 const router = useRouter();
+
+const [userId, setUserId] = useState("");
+
+useEffect(() => {
+  async function loadUser() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      setUserId(user.id);
+    }
+  }
+
+  loadUser();
+}, []);
 
 async function handleLogout() {
   await supabase.auth.signOut({
@@ -33,14 +50,46 @@ flexDirection: "column",
 gap: 16,
 }}
 >
-<h1
-style={{
-margin: 0,
-fontSize: 28,
-fontWeight: 800,
-}}
+<div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: 16,
+    marginBottom: 8,
+  }}
 >
-Settings </h1>
+  <button
+    onClick={() => {
+      if (userId) {
+        router.push(`/profile/${userId}`);
+      }
+    }}
+    style={{
+      width: 42,
+      height: 42,
+      borderRadius: 12,
+      border: "1px solid #25252D",
+      background: "#15151A",
+      color: "#fff",
+      cursor: "pointer",
+      fontSize: 20,
+      fontWeight: 700,
+      flexShrink: 0,
+    }}
+  >
+    ←
+  </button>
+
+  <h1
+    style={{
+      margin: 0,
+      fontSize: 28,
+      fontWeight: 800,
+    }}
+  >
+    Settings
+  </h1>
+</div>
 
     <div
       style={{
@@ -51,10 +100,7 @@ Settings </h1>
       }}
     >
       <button
-  onClick={() =>
-    window.location.href =
-      "/settings/profile"
-  }
+  onClick={() => router.push("/settings/profile")}
   style={{
     width: "100%",
     background: "transparent",
@@ -82,7 +128,7 @@ Settings </h1>
   }}
 >
   <button
-    onClick={() => (window.location.href = "/settings/account")}
+    onClick={() => router.push("/settings/account")}
     style={{
       width: "100%",
       background: "transparent",
@@ -110,10 +156,7 @@ Settings </h1>
   }}
 >
       <button
-onClick={() =>
-  window.location.href =
-    "/settings/privacy"
-}
+onClick={() => router.push("/settings/privacy")}
   style={{
     width: "100%",
     background: "transparent",

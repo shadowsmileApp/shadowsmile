@@ -1,8 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function PrivacySettingsPage() {
+
+const router = useRouter();
+
   const [privateProfile, setPrivateProfile] =
     useState(false);
 
@@ -25,7 +29,42 @@ export default function PrivacySettingsPage() {
           gap: 16,
         }}
       >
-        <h1>Privacy Settings</h1>
+        <div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: 16,
+    marginBottom: 8,
+  }}
+>
+  <button
+    onClick={() => router.push("/settings")}
+    style={{
+      width: 42,
+      height: 42,
+      borderRadius: 12,
+      border: "1px solid #25252D",
+      background: "#15151A",
+      color: "#fff",
+      cursor: "pointer",
+      fontSize: 20,
+      fontWeight: 700,
+      flexShrink: 0,
+    }}
+  >
+    ←
+  </button>
+
+  <h1
+    style={{
+      margin: 0,
+      fontSize: 28,
+      fontWeight: 800,
+    }}
+  >
+    Privacy Settings
+  </h1>
+</div>
 
         <div
           style={{
