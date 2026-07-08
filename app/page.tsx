@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   MessageSquare,
-  ShieldAlert,
   Command,
   Heart,
   Share2,
@@ -345,9 +344,6 @@ if (!user) {
     </button>
   )}
 
-          <button style={styles.shield}>
-            <ShieldAlert size={18} />
-          </button>
         </div>
       </header>
 
@@ -566,16 +562,6 @@ const styles: Record<string, React.CSSProperties> = {
   },
 
   title: { fontSize: 18, fontWeight: 800 },
-
-  shield: {
-    width: 42,
-    height: 42,
-    borderRadius: "50%",
-    border: "1px solid #333",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-  },
 
   market: {
     padding: "8px 12px",

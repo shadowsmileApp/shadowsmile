@@ -175,6 +175,403 @@ onClick={() => router.push("/settings/privacy")}
 </button>
     </div>
 
+<h2
+  style={{
+    margin: "8px 0 0 4px",
+    fontSize: 18,
+    fontWeight: 800,
+    color: "#FFFFFF",
+  }}
+>
+  Personalization
+</h2>
+
+<div
+  style={{
+    background: "#15151A",
+    border: "1px solid #25252D",
+    borderRadius: 16,
+    overflow: "hidden",
+  }}
+>
+
+  <button
+    onClick={() => router.push("/settings/notifications")}
+    style={{
+      width: "100%",
+      background: "transparent",
+      border: "none",
+      borderBottom: "1px solid #25252D",
+      color: "#fff",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      cursor: "pointer",
+      fontSize: 18,
+      fontWeight: 700,
+      padding: 16,
+    }}
+  >
+    <span>Notifications</span>
+    <span>›</span>
+  </button>
+
+  <button
+    onClick={() => router.push("/settings/appearance")}
+    style={{
+      width: "100%",
+      background: "transparent",
+      border: "none",
+      color: "#fff",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      cursor: "pointer",
+      fontSize: 18,
+      fontWeight: 700,
+      padding: 16,
+    }}
+  >
+    <span>Appearance</span>
+    <span>›</span>
+  </button>
+
+</div>
+
+<h2
+  style={{
+    margin: "8px 0 0 4px",
+    fontSize: 18,
+    fontWeight: 800,
+    color: "#FFFFFF",
+  }}
+>
+  Safety & Privacy
+</h2>
+
+<div
+  style={{
+    background: "#15151A",
+    border: "1px solid #25252D",
+    borderRadius: 16,
+    overflow: "hidden",
+  }}
+>
+
+  <button
+    onClick={() => router.push("/settings/blocked-users")}
+    style={{
+      width: "100%",
+      background: "transparent",
+      border: "none",
+      borderBottom: "1px solid #25252D",
+      color: "#fff",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      cursor: "pointer",
+      fontSize: 18,
+      fontWeight: 700,
+      padding: 16,
+    }}
+  >
+    <span>Blocked Users</span>
+    <span>›</span>
+  </button>
+
+  <button
+    onClick={() => router.push("/settings/message-requests")}
+    style={{
+      width: "100%",
+      background: "transparent",
+      border: "none",
+      borderBottom: "1px solid #25252D",
+      color: "#fff",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      cursor: "pointer",
+      fontSize: 18,
+      fontWeight: 700,
+      padding: 16,
+    }}
+  >
+    <span>Message Requests</span>
+    <span>›</span>
+  </button>
+
+  <button
+    onClick={() => router.push("/settings/sensitive-content")}
+    style={{
+      width: "100%",
+      background: "transparent",
+      border: "none",
+      borderBottom: "1px solid #25252D",
+      color: "#fff",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      cursor: "pointer",
+      fontSize: 18,
+      fontWeight: 700,
+      padding: 16,
+    }}
+  >
+    <span>Sensitive Content</span>
+    <span>›</span>
+  </button>
+
+  <button
+    onClick={() => router.push("/settings/quiet-hours")}
+    style={{
+      width: "100%",
+      background: "transparent",
+      border: "none",
+      borderBottom: "1px solid #25252D",
+      color: "#fff",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      cursor: "pointer",
+      fontSize: 18,
+      fontWeight: 700,
+      padding: 16,
+    }}
+  >
+    <span>Quiet Hours</span>
+    <span>›</span>
+  </button>
+
+  <button
+    onClick={() => router.push("/settings/download-data")}
+    style={{
+      width: "100%",
+      background: "transparent",
+      border: "none",
+      color: "#fff",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      cursor: "pointer",
+      fontSize: 18,
+      fontWeight: 700,
+      padding: 16,
+    }}
+  >
+    <span>Download My Data</span>
+    <span>›</span>
+  </button>
+
+</div>
+
+<h2
+  style={{
+    margin: "8px 0 0 4px",
+    fontSize: 18,
+    fontWeight: 800,
+    color: "#FFFFFF",
+  }}
+>
+  Legal & Safety
+</h2>
+
+<div
+  style={{
+    background: "#15151A",
+    border: "1px solid #25252D",
+    borderRadius: 16,
+    overflow: "hidden",
+  }}
+>
+  <button
+    onClick={() => router.push("/settings/safety")}
+    style={{
+      width: "100%",
+      background: "transparent",
+      border: "none",
+      borderBottom: "1px solid #25252D",
+      color: "#fff",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      cursor: "pointer",
+      fontSize: 18,
+      fontWeight: 700,
+      padding: 16,
+    }}
+  >
+    <span>Safety Center</span>
+    <span>›</span>
+  </button>
+
+  <button
+    onClick={() => router.push("/settings/privacy-policy")}
+    style={{
+      width: "100%",
+      background: "transparent",
+      border: "none",
+      borderBottom: "1px solid #25252D",
+      color: "#fff",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      cursor: "pointer",
+      fontSize: 18,
+      fontWeight: 700,
+      padding: 16,
+    }}
+  >
+    <span>Privacy Policy</span>
+    <span>›</span>
+  </button>
+
+  <button
+    onClick={() => router.push("/settings/terms")}
+    style={{
+      width: "100%",
+      background: "transparent",
+      border: "none",
+      borderBottom: "1px solid #25252D",
+      color: "#fff",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      cursor: "pointer",
+      fontSize: 18,
+      fontWeight: 700,
+      padding: 16,
+    }}
+  >
+    <span>Terms of Service</span>
+    <span>›</span>
+  </button>
+
+  <button
+    onClick={() => router.push("/settings/community")}
+    style={{
+      width: "100%",
+      background: "transparent",
+      border: "none",
+      borderBottom: "1px solid #25252D",
+      color: "#fff",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      cursor: "pointer",
+      fontSize: 18,
+      fontWeight: 700,
+      padding: 16,
+    }}
+  >
+    <span>Community Guidelines</span>
+    <span>›</span>
+  </button>
+
+  <button
+    onClick={() => router.push("/settings/about")}
+    style={{
+      width: "100%",
+      background: "transparent",
+      border: "none",
+      color: "#fff",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      cursor: "pointer",
+      fontSize: 18,
+      fontWeight: 700,
+      padding: 16,
+    }}
+  >
+    <span>About ShadowSmile</span>
+    <span>›</span>
+  </button>
+</div>
+
+<h2
+  style={{
+    margin: "8px 0 0 4px",
+    fontSize: 18,
+    fontWeight: 800,
+    color: "#FFFFFF",
+  }}
+>
+  Support
+</h2>
+
+<div
+  style={{
+    background: "#15151A",
+    border: "1px solid #25252D",
+    borderRadius: 16,
+    overflow: "hidden",
+  }}
+>
+
+  <button
+    onClick={() => router.push("/settings/contact-support")}
+    style={{
+      width: "100%",
+      background: "transparent",
+      border: "none",
+      borderBottom: "1px solid #25252D",
+      color: "#fff",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      cursor: "pointer",
+      fontSize: 18,
+      fontWeight: 700,
+      padding: 16,
+    }}
+  >
+    <span>Contact Support</span>
+    <span>›</span>
+  </button>
+
+  <button
+    onClick={() => router.push("/settings/report-bug")}
+    style={{
+      width: "100%",
+      background: "transparent",
+      border: "none",
+      borderBottom: "1px solid #25252D",
+      color: "#fff",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      cursor: "pointer",
+      fontSize: 18,
+      fontWeight: 700,
+      padding: 16,
+    }}
+  >
+    <span>Report a Bug</span>
+    <span>›</span>
+  </button>
+
+  <button
+    onClick={() => router.push("/settings/feedback")}
+    style={{
+      width: "100%",
+      background: "transparent",
+      border: "none",
+      color: "#fff",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      cursor: "pointer",
+      fontSize: 18,
+      fontWeight: 700,
+      padding: 16,
+    }}
+  >
+    <span>Send Feedback</span>
+    <span>›</span>
+  </button>
+
+</div>
+
       <div
   style={{
     background: "#15151A",
