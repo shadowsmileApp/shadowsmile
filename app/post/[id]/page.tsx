@@ -11,10 +11,13 @@ import { Heart, MessageSquare } from "lucide-react";
 type Post = {
   id: string;
   user_id: string | null;
-  post_type: string;
+
   shadow_text: string | null;
   smile_text: string | null;
   content: string | null;
+  image_url?: string | null;
+
+  post_type: string;
   created_at: string;
 };
 
@@ -211,18 +214,33 @@ if (!user) {
       {/* POST CARD */}
       <div style={styles.card}>
         {post.post_type === "flip" ? (
-          <>
-            <p>
-              <b>Shadow:</b> {post.shadow_text}
-            </p>
+  <>
+    <p>
+      <b>Shadow:</b> {post.shadow_text}
+    </p>
 
-            <p style={{ color: "#39FF88" }}>
-              <b>Smile:</b> {post.smile_text}
-            </p>
-          </>
-        ) : (
-          <p>{post.content}</p>
-        )}
+    <p>
+      <b>Smile:</b> {post.smile_text}
+    </p>
+  </>
+) : (
+  <p>{post.content}</p>
+)}
+
+{post.image_url && (
+  <img
+    src={post.image_url}
+    alt="Post"
+    style={{
+      width: "100%",
+      borderRadius: 16,
+      marginTop: 16,
+      marginBottom: 16,
+      maxHeight: 500,
+      objectFit: "cover",
+    }}
+  />
+)}
 
         {/* ACTIONS */}
         <div style={styles.actions}>

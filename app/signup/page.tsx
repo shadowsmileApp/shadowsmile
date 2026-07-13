@@ -379,7 +379,7 @@ if (profile?.onboarding_complete) {
         className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-90"
         style={{
           backgroundImage:
-            "url('/Shadowsmile.png')",
+            "url('/BlackMaltra.png')",
           filter:
             "brightness(0.8) contrast(1.1)",
         }}
@@ -392,9 +392,9 @@ if (profile?.onboarding_complete) {
 
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white">
-            Shadow{" "}
+            Black{" "}
             <span className="text-emerald-400">
-              Smile
+              Maltra
             </span>
           </h1>
 

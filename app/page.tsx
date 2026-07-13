@@ -29,6 +29,7 @@ type Post = {
   shadow_text: string | null;
   smile_text: string | null;
   content: string | null;
+  image_url?: string | null;
 
   post_type: string;
   created_at: string;
@@ -284,7 +285,7 @@ loadPosts();
   if (loading) {
   return (
     <div style={styles.loading}>
-      Loading ShadowSmile...
+      Loading BlackMaltra...
     </div>
   );
 }
@@ -313,7 +314,7 @@ if (!user) {
           </div>
 
           <h1 style={styles.title}>
-            Shadow<span style={{ color: "#39FF88" }}>Smile</span>
+            BlackMaltra
           </h1>
         </div>
 
@@ -441,18 +442,32 @@ if (!user) {
   }}
 >
   {p.post_type === "flip" ? (
-    <>
-      <p>
-        <b>Shadow:</b> {p.shadow_text}
-      </p>
+  <>
+    <p>
+      <b>Shadow:</b> {p.shadow_text}
+    </p>
 
-      <p style={{ color: "#39FF88" }}>
-        <b>Smile:</b> {p.smile_text}
-      </p>
-    </>
-  ) : (
-    <p>{p.content}</p>
-  )}
+    <p style={{ color: "#39FF88" }}>
+      <b>Smile:</b> {p.smile_text}
+    </p>
+  </>
+) : (
+  <p>{p.content}</p>
+)}
+
+{p.image_url && (
+  <img
+    src={p.image_url}
+    alt="Post"
+    style={{
+      width: "100%",
+      marginTop: 14,
+      borderRadius: 14,
+      maxHeight: 450,
+      objectFit: "cover",
+    }}
+  />
+)}
 </div>
 
               <div

@@ -25,11 +25,6 @@ export default function MessagesPage() {
   const [selectedChat, setSelectedChat] =
     useState<string | null>(null);
 
-  const [chatAccess, setChatAccess] =
-    useState<"open" | "request">(
-      "open"
-    );
-
   const [messageText, setMessageText] =
     useState("");
 
@@ -39,9 +34,10 @@ useState<any[]>([]);
 const [conversations, setConversations] =
 useState<
 {
-id: string;
-display_name: string;
-handle: string;
+  id: string;
+  display_name: string;
+  handle: string;
+  avatar_url: string | null;
 }[]
 >([]);
 
@@ -97,7 +93,7 @@ useEffect(() => {
       await supabase
         .from("profiles")
         .select(
-          "id, display_name, handle"
+          "id, display_name, handle, avatar_url"
         )
         .or(
           `display_name.ilike.%${search}%,handle.ilike.%${search}%`
@@ -196,10 +192,6 @@ const [showScrollBottom,
   setShowScrollBottom] =
 useState(false);
 
-const [messagesLoaded,
-  setMessagesLoaded] =
-useState(false);
-
 useEffect(() => {
   async function loadUser() {
     try {
@@ -275,15 +267,6 @@ useEffect(() => {
 }, [selectedChat, isMobile]);
 
 useEffect(() => {
-  const savedMessages =
-    localStorage.getItem(
-      "shadowsmile_messages"
-    );
-
-  const savedRequests =
-    localStorage.getItem(
-      "shadowsmile_requests"
-    );
 
   const savedSelectedChat =
     localStorage.getItem(
@@ -364,37 +347,6 @@ useEffect(() => {
     );
   }
 
-  const parsedMessages =
-  savedMessages
-    ? JSON.parse(savedMessages)
-    : {};
-
-if (
-  savedSelectedChat &&
-  parsedMessages[
-    savedSelectedChat
-  ]
-) {
-  setSelectedChat(
-    savedSelectedChat
-  );
-}
-
-    const parsedRequests =
-      savedRequests
-        ? JSON.parse(
-            savedRequests
-          )
-        : {};
-
-    setChatAccess(
-      parsedRequests[
-        savedSelectedChat
-      ] === false
-        ? "request"
-        : "open"
-    );
-
     shouldAutoScrollRef.current =
       true;
 
@@ -412,8 +364,6 @@ if (
         }
       });
     });
-
-  setMessagesLoaded(true);
 }, []);
 
 useEffect(() => {
@@ -452,21 +402,6 @@ behavior: "smooth",
   });
 });
 }, [conversation]);
-
-useEffect(() => {
-  if (!messagesLoaded)
-    return;
-
-  localStorage.setItem(
-    "shadowsmile_messages",
-    JSON.stringify(
-      conversation
-    )
-  );
-}, [
-  conversation,
-  messagesLoaded,
-]);
 
 useEffect(() => {
   // DM request system disabled for now
@@ -705,11 +640,14 @@ useEffect(() => {
     if (!user) return;
 
     const { data, error } =
-      await supabase
-        .from("direct_messages")
-        .select(
-          "sender_id, receiver_id"
-        );
+  await supabase
+    .from("direct_messages")
+    .select(
+      "sender_id, receiver_id"
+    )
+    .or(
+      `sender_id.eq.${user.id},receiver_id.eq.${user.id}`
+    );
 
     if (error) {
       console.error(
@@ -756,8 +694,8 @@ useEffect(() => {
     } = await supabase
       .from("profiles")
       .select(
-  "id, display_name, handle"
-)
+        "id, display_name, handle, avatar_url"
+      )
       .in(
         "id",
         otherUserIds
@@ -773,14 +711,17 @@ useEffect(() => {
     setConversations(
   (profiles || []).map(
     (profile) => ({
-      id: profile.id,
-      display_name:
-        profile.display_name ||
-        "Unknown User",
+  id: profile.id,
+  display_name:
+    profile.display_name ||
+    "Unknown User",
 
-      handle:
-        profile.handle || "",
-    })
+  handle:
+    profile.handle || "",
+
+  avatar_url:
+    profile.avatar_url,
+})
   )
 );
   }
@@ -788,39 +729,71 @@ useEffect(() => {
   loadConversations();
 }, [user]);
 
+const selectedChatProfile =
+  conversations.find(
+    (chat) => chat.id === selectedChat
+  );
+
 useEffect(() => {
-  async function loadChatName() {
-    if (!selectedChat) return;
-
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("display_name")
-      .eq("id", selectedChat)
-      .single();
-
-    if (!error && data) {
-      setChatDisplayName(data.display_name);
-
-      setConversations((prev) =>
-        prev.map((conversation) =>
-          conversation.id === selectedChat
-            ? {
-                ...conversation,
-                display_name: data.display_name,
-              }
-            : conversation
-        )
-      );
-    }
+  if (!selectedChatProfile) {
+    setChatDisplayName("");
+    return;
   }
 
-  loadChatName();
-}, [selectedChat]);
+  setChatDisplayName(
+    selectedChatProfile.display_name
+  );
+}, [selectedChatProfile]);
 
 useEffect(() => {
   if (!userParam) return;
 
   setSelectedChat(userParam);
+
+async function loadProfilePreview() {
+  const { data } = await supabase
+    .from("profiles")
+    .select("display_name, handle, avatar_url")
+    .eq("id", userParam)
+    .maybeSingle();
+
+  if (!data) return;
+
+  setConversations((prev) => {
+  const existing = prev.find(
+    (chat) => chat.id === userParam
+  );
+
+  if (existing) {
+    return prev.map((chat) =>
+      chat.id === userParam
+        ? {
+            ...chat,
+            display_name:
+              data.display_name || "Unknown User",
+            handle:
+              data.handle || "",
+            avatar_url:
+              data.avatar_url,
+          }
+        : chat
+    );
+  }
+
+  return [
+    ...prev,
+    {
+      id: userParam,
+      display_name:
+        data.display_name || "Unknown User",
+      handle:
+        data.handle || "",
+      avatar_url:
+        data.avatar_url,
+    },
+  ];
+});
+}
 
   setConversations((prev) => {
   const alreadyExists = prev.some(
@@ -832,14 +805,16 @@ useEffect(() => {
   }
 
   return [
-    ...prev,
-    {
-      id: userParam,
-      display_name: "Loading...",
-      handle: "",
-    },
-  ];
+  ...prev,
+  {
+    id: userParam,
+    display_name: "Loading...",
+    handle: "",
+    avatar_url: null,
+  },
+];
 });
+loadProfilePreview();
 }, [userParam]);
 
 const handleSendMessage = async () => {
@@ -1441,36 +1416,91 @@ setUnreadChats(
     marginBottom: 6,
   }}
 >
-  <div
+
+<div
   style={{
-    fontWeight: 700,
-
-    whiteSpace:
-      "nowrap",
-
-    overflow:
-      "hidden",
-
-    textOverflow:
-      "ellipsis",
-
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
     flex: 1,
-
     minWidth: 0,
-
-    paddingRight: 10,
   }}
 >
-  {chatName.display_name}
+  <button
+    type="button"
+    onClick={(e) => {
+      e.stopPropagation();
+      router.push(`/profile/${chatName.id}`);
+    }}
+    style={{
+      width: 48,
+      height: 48,
+      borderRadius: "50%",
+      overflow: "hidden",
+      border: "1px solid #2A2A35",
+      background: "#1A1A22",
+      padding: 0,
+      cursor: "pointer",
+      flexShrink: 0,
+    }}
+  >
+    {chatName.avatar_url ? (
+      <img
+        src={chatName.avatar_url}
+        alt={chatName.display_name}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+        }}
+      />
+    ) : (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontWeight: 700,
+          color: "#fff",
+        }}
+      >
+        {chatName.display_name.charAt(0).toUpperCase()}
+      </div>
+    )}
+  </button>
+
+  <button
+    type="button"
+    onClick={(e) => {
+      e.stopPropagation();
+      router.push(`/profile/${chatName.id}`);
+    }}
+    style={{
+      fontWeight: 700,
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      flex: 1,
+      minWidth: 0,
+      background: "none",
+      border: "none",
+      color: "#fff",
+      textAlign: "left",
+      cursor: "pointer",
+      fontSize: "inherit",
+      padding: 0,
+    }}
+  >
+    {chatName.display_name}
+  </button>
 </div>
 
   <div
   style={{
-    position:
-      "relative",
-
-    zIndex:
-      100000,
+    position: "relative",
+    zIndex: 100000,
   }}
 >
     <button
@@ -1964,31 +1994,94 @@ transform:
     </button>
   )}
 
-  <span
+  <div
   style={{
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
     flex: 1,
     minWidth: 0,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
   }}
 >
-  {chatDisplayName}
-</span>
+  <button
+    type="button"
+    onClick={() =>
+      router.push(`/profile/${selectedChat}`)
+    }
+    style={{
+      width: 42,
+      height: 42,
+      borderRadius: "50%",
+      overflow: "hidden",
+      border: "1px solid #2A2A35",
+      background: "#1A1A22",
+      padding: 0,
+      cursor: "pointer",
+      flexShrink: 0,
+    }}
+  >
+    {selectedChatProfile?.avatar_url ? (
+      <img
+        src={selectedChatProfile.avatar_url}
+        alt={selectedChatProfile.display_name}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+        }}
+      />
+    ) : (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#fff",
+          fontWeight: 700,
+        }}
+      >
+        {chatDisplayName
+          ?.charAt(0)
+          .toUpperCase()}
+      </div>
+    )}
+  </button>
+
+  <button
+    type="button"
+    onClick={() =>
+      router.push(`/profile/${selectedChat}`)
+    }
+    style={{
+      flex: 1,
+      minWidth: 0,
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap",
+      background: "none",
+      border: "none",
+      color: "#fff",
+      textAlign: "left",
+      fontSize: 18,
+      fontWeight: 700,
+      cursor: "pointer",
+      padding: 0,
+    }}
+  >
+    {chatDisplayName}
+  </button>
+</div>
 </div>
 
               {/* CHAT AREA */}
 <div
   ref={chatContainerRef}
-
   onScroll={() => {
-    if (
-      !chatContainerRef.current
-    )
-      return;
+    if (!chatContainerRef.current) return;
 
-    const container =
-      chatContainerRef.current;
+    const container = chatContainerRef.current;
 
     const distanceFromBottom =
       container.scrollHeight -
@@ -1998,20 +2091,19 @@ transform:
     shouldAutoScrollRef.current =
       distanceFromBottom < 120;
 
-setShowScrollBottom(
-  distanceFromBottom > 300
-);
+    setShowScrollBottom(
+      distanceFromBottom > 300
+    );
   }}
-
   style={{
     flex: 1,
     padding: 24,
     overflowY: "auto",
     display: "flex",
-    flexDirection:
-      "column",
+    flexDirection: "column",
   }}
 >
+
 <div
   style={{
     width: "100%",

@@ -31,6 +31,7 @@ type Post = {
   shadow_text: string | null;
   smile_text: string | null;
   content: string | null;
+  image_url?: string | null;
   created_at: string;
 };
 
@@ -70,6 +71,9 @@ const [posts, setPosts] =
 const [loading, setLoading] =
   useState(true);
 
+const [profileLoading, setProfileLoading] =
+  useState(true);
+
 const [isMobile, setIsMobile] =
   useState(false);
 
@@ -91,7 +95,7 @@ const [avatarFile, setAvatarFile] =
 /* ================= FOLLOW SYSTEM ================= */
 
 const [isFollowing, setIsFollowing] =
-  useState(false);
+  useState<boolean | null>(null);
 
 const [followLoading, setFollowLoading] =
   useState(false);
@@ -181,6 +185,9 @@ useEffect(() => {
   async function loadProfile() {
     if (!id) return;
 
+    setProfileLoading(true);
+    setIsFollowing(null);
+
     const { data, error } =
       await supabase
         .from("profiles")
@@ -202,12 +209,13 @@ useEffect(() => {
       return;
     }
 
-    setProfile(data || null);
+    if (!data) {
+      setProfileLoading(false);
+      router.replace("/search");
+      return;
+    }
 
-if (!data) {
-  router.push("/search");
-  return;
-}
+    setProfile(data);
 
     setEditName(
       data?.display_name || ""
@@ -265,6 +273,9 @@ setSocialStats({
       ? 0
       : followingResult.count || 0,
 });
+
+setProfileLoading(false);
+
   }
 
   loadProfile();
@@ -495,16 +506,17 @@ const profileBio =
 
   /* ================= LOADING ================= */
 
-  if (loading) {
+if (
+  loading ||
+  profileLoading ||
+  !currentUser ||
+  !profile
+) {
   return (
     <div style={styles.loading}>
       Loading profile...
     </div>
   );
-}
-
-if (!currentUser) {
-  return null;
 }
 
   /* ================= UI ================= */
@@ -757,7 +769,7 @@ onClick={() =>
   )}
 </div>
 
-    {!isOwnProfile && (
+    {!isOwnProfile && isFollowing !== null &&  (
   <div style={styles.mobileActionButtons}>
     <button
       style={{
@@ -871,7 +883,7 @@ onClick={() =>
 )}
 
 
-{!isOwnProfile ? (
+{!isOwnProfile && isFollowing !== null ? (
   <>
     <button
       style={{
@@ -1100,6 +1112,20 @@ type="button"
               ) : (
                 <p>{p.content}</p>
               )}
+
+{p.image_url && (
+  <img
+    src={p.image_url}
+    alt="Post"
+    style={{
+      width: "100%",
+      marginTop: 14,
+      borderRadius: 14,
+      maxHeight: 450,
+      objectFit: "cover",
+    }}
+  />
+)}
 
               <div style={styles.actions}>
                 <button

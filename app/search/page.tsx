@@ -159,7 +159,7 @@ return (
             e.target.value
           )
         }
-        placeholder="Search users..."
+        placeholder="Search posts, users, and more..."
         style={{
           width: "100%",
           padding: 14,
@@ -180,8 +180,7 @@ return (
             marginTop: 40,
           }}
         >
-          Start typing to search
-          ShadowSmile
+          Start typing to search through BlackMaltra
         </div>
       ) : (
         <div

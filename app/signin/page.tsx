@@ -105,7 +105,7 @@ export default function SignInPage() {
       <div
         className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-90"
         style={{
-          backgroundImage: "url('/Shadowsmile.png')",
+          backgroundImage: "url('/BlackMaltra.png')",
           filter: "brightness(0.8) contrast(1.1)",
         }}
       >
@@ -117,11 +117,11 @@ export default function SignInPage() {
 
         <div className="text-center mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
-            Shadow{" "}
-            <span className="text-emerald-400">
-              Smile
-            </span>
-          </h1>
+  Black{" "}
+  <span className="text-emerald-400">
+    Maltra
+  </span>
+</h1>
 
           <p className="mt-3 text-sm text-gray-400 italic px-2">
             Enter As You Are.
