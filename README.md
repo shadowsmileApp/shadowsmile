@@ -1,4 +1,4 @@
-# ShadowSmile
+# BlackMaltra
 
 Private-first social platform.
 
@@ -34,7 +34,7 @@ docs/
 * `.env.local` contains active environment variables.
 * `.env.local.save` is an older backup and is protected by `.gitignore`.
 * `.vercel/` links this project to Vercel.
-* Documentation inside `docs/` is intended for the ShadowSmile Council (ChatGPT, Claude, Gemini, Grok, and eventually ShadowSmile AI itself).
+* Documentation inside `docs/` is intended for the BlackMaltra Council (ChatGPT, Claude, Gemini, Grok, and eventually ShadowSmile AI itself).
 
 ## Status
 
