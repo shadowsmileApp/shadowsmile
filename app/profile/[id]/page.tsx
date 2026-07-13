@@ -490,7 +490,7 @@ setSocialStats((prev) => ({
 const displayName =
   `${profile?.first_name ?? ""} ${profile?.last_name ?? ""}`.trim() ||
   profile?.display_name?.trim() ||
-  "ShadowSmile Member";
+  "BlackMaltra Member";
 
 const profileBio =
   profile?.bio?.trim()
@@ -656,7 +656,7 @@ onClick={() =>
         color: "#888",
       }}
     >
-      Shadows
+      Veils
     </div>
   </button>
 
@@ -719,7 +719,7 @@ onClick={() =>
       color: "#888",
     }}
   >
-    Smiles
+    Unveils
   </div>
 </button>
 
@@ -811,7 +811,7 @@ onClick={() =>
     textAlign: "center",
   }}
 >
-  ShadowSmile member since{" "}
+  BlackMaltra member since{" "}
   {profile?.created_at
     ? new Date(profile.created_at).toLocaleDateString()
     : "Unknown"}
@@ -958,7 +958,7 @@ null}
     textAlign: "left",
   }}
 >
-          ShadowSmile member since{" "}
+          BlackMaltra member since{" "}
           {profile?.created_at
             ? new Date(
                 profile.created_at
@@ -987,7 +987,7 @@ type="button"
     </span>
 
     <span style={styles.counterLabel}>
-      Shadows
+      Veils
     </span>
   </button>
 
@@ -1019,7 +1019,7 @@ type="button"
   </span>
 
   <span style={styles.counterLabel}>
-    Smiles
+    Unveils
   </span>
 </button>
 </div>
@@ -1097,7 +1097,7 @@ type="button"
               {p.post_type === "flip" ? (
                 <>
                   <p>
-                    <b>Shadow:</b> {p.shadow_text}
+                    <b>Veil:</b> {p.shadow_text}
                   </p>
 
                   <p
@@ -1105,7 +1105,7 @@ type="button"
                       color: "#39FF88",
                     }}
                   >
-                    <b>Smile:</b>{" "}
+                    <b>Unveil:</b>{" "}
                     {p.smile_text}
                   </p>
                 </>

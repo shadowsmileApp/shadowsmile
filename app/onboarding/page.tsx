@@ -113,7 +113,7 @@ const privacyOptions = [
     "Why are you here?"}
 
   {step === 2 &&
-    "How should ShadowSmile feel?"}
+    "How should BlackMaltra feel?"}
 
   {step === 3 &&
     "What posts do you enjoy?"}

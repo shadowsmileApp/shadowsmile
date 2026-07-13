@@ -216,11 +216,11 @@ if (!user) {
         {post.post_type === "flip" ? (
   <>
     <p>
-      <b>Shadow:</b> {post.shadow_text}
+      <b>Veil:</b> {post.shadow_text}
     </p>
 
     <p>
-      <b>Smile:</b> {post.smile_text}
+      <b>Unveil:</b> {post.smile_text}
     </p>
   </>
 ) : (

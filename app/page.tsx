@@ -23,7 +23,7 @@ type Post = {
   // Internal creator link
   user_id: string | null;
 
-  // ShadowSmile privacy
+  // BlackMaltra privacy
   is_anonymous?: boolean | null;
 
   shadow_text: string | null;
@@ -361,9 +361,7 @@ if (!user) {
     fontSize: isMobile ? 26 : 34,
   }}
 >
-          Express the Shadow.
-          <br />
-          Share the Smile.
+          Welcome to BlackMaltra
         </h2>
 
         <p style={styles.heroText}>
@@ -444,11 +442,11 @@ if (!user) {
   {p.post_type === "flip" ? (
   <>
     <p>
-      <b>Shadow:</b> {p.shadow_text}
+      <b>Veil:</b> {p.shadow_text}
     </p>
 
     <p style={{ color: "#39FF88" }}>
-      <b>Smile:</b> {p.smile_text}
+      <b>Unveil:</b> {p.smile_text}
     </p>
   </>
 ) : (

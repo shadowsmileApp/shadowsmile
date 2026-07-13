@@ -483,7 +483,7 @@ onClick={() => router.push("/settings/privacy")}
       padding: 16,
     }}
   >
-    <span>About ShadowSmile</span>
+    <span>About BlackMaltra</span>
     <span>›</span>
   </button>
 </div>
@@ -610,7 +610,7 @@ onClick={() => router.push("/settings/privacy")}
 <button
   onClick={async () => {
   const confirmed = window.confirm(
-    "This permanently deletes your Shadow Smile account and cannot be undone."
+    "This permanently deletes your BlackMaltra account and cannot be undone."
   );
 
   if (!confirmed) return;

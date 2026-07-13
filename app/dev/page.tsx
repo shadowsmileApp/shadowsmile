@@ -102,7 +102,7 @@ if (loading || !isAdmin) {
 
   return (
     <div style={styles.container}>
-      <h1 style={styles.title}>🧪 ShadowSmile Dev Sandbox</h1>
+      <h1 style={styles.title}>🧪 BlackMaltra Dev Sandbox</h1>
 
       <button style={styles.button} onClick={loadPosts}>
         Refresh Posts

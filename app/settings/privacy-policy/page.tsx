@@ -46,7 +46,7 @@ export default function PrivacyPolicyPage() {
         </h1>
 
         <p>
-          This Privacy Policy explains how ShadowSmile collects,
+          This Privacy Policy explains how BlackMaltra collects,
           uses, stores, and protects your information while using
           the platform.
         </p>
@@ -74,7 +74,7 @@ export default function PrivacyPolicyPage() {
     marginBottom: 24,
   }}
 >
-  ShadowSmile collects only the information necessary to provide and improve
+  BlackMaltra collects only the information necessary to provide and improve
   the platform.
   <br />
   <br />
@@ -132,7 +132,7 @@ export default function PrivacyPolicyPage() {
     marginBottom: 24,
   }}
 >
-  ShadowSmile uses collected information to operate, maintain, improve, and
+  BlackMaltra uses collected information to operate, maintain, improve, and
   protect the platform.
   <br />
   <br />
@@ -169,7 +169,7 @@ export default function PrivacyPolicyPage() {
     lineHeight: 1.8,
   }}
 >
-ShadowSmile does not sell your personal information to third parties.
+BlackMaltra does not sell your personal information to third parties.
 </p>
 
 <hr style={{ margin: "30px 0", borderColor: "#25252D" }} />
@@ -191,7 +191,7 @@ ShadowSmile does not sell your personal information to third parties.
     marginBottom: 24,
   }}
 >
-ShadowSmile uses trusted third-party service providers to operate the platform.
+BlackMaltra uses trusted third-party service providers to operate the platform.
   <br />
   <br />
 These providers only receive the information necessary to perform their services and are required to protect your data.
@@ -212,7 +212,7 @@ These providers only receive the information necessary to perform their services
   </li>
 
   <li>
-    - <strong>Hosting Provider</strong> — ShadowSmile may use secure cloud
+    - <strong>Hosting Provider</strong> — BlackMaltra may use secure cloud
     hosting services to deliver the application.
   </li>
 </ul>
@@ -224,7 +224,7 @@ These providers only receive the information necessary to perform their services
     marginBottom: 18,
   }}
 >
-ShadowSmile does not sell, rent, or trade your personal information.
+BlackMaltra does not sell, rent, or trade your personal information.
 </p>
 
 <p
@@ -255,7 +255,7 @@ We may disclose information when required by law, to comply with legal obligatio
     marginBottom: 24,
   }}
 >
-ShadowSmile is intended only for individuals who are at least 13 years old.
+BlackMaltra is intended only for individuals who are at least 13 years old.
   <br />
   <br />
 Users under the age of 13 may not create an account or use the platform.
@@ -277,7 +277,7 @@ If we discover that a child under the age of 13 has created an account or provid
     lineHeight: 1.8,
   }}
 >
-Parents or legal guardians who believe their child has provided information to ShadowSmile may contact us to request its removal.
+Parents or legal guardians who believe their child has provided information to BlackMaltra may contact us to request its removal.
 </p>
 
 <hr style={{ margin: "30px 0", borderColor: "#25252D" }} />
@@ -299,7 +299,7 @@ Parents or legal guardians who believe their child has provided information to S
     marginBottom: 24,
   }}
 >
-ShadowSmile believes you should have control over your personal information.
+BlackMaltra believes you should have control over your personal information.
   <br />
   <br />
 Depending on your location and applicable laws, you may have the right to:
@@ -329,7 +329,7 @@ Depending on your location and applicable laws, you may have the right to:
     lineHeight: 1.8,
   }}
 >
-ShadowSmile includes a built-in account deletion feature located in <strong>Settings → Danger Zone → Delete Account</strong>.
+BlackMaltra includes a built-in account deletion feature located in <strong>Settings → Danger Zone → Delete Account</strong>.
   <br />
   <br />
 Deleting your account permanently removes your account and associated personal information from our systems, except where information must be retained to comply with legal obligations, resolve disputes, prevent fraud, or enforce our policies.
@@ -348,7 +348,7 @@ Deleting your account permanently removes your account and associated personal i
 </h2>
 
 <p style={{ marginBottom: 24 }}>
-  ShadowSmile retains personal information only for as long as necessary to provide the platform, maintain account functionality, comply with legal obligations, resolve disputes, prevent fraud, and enforce our policies.
+  BlackMaltra retains personal information only for as long as necessary to provide the platform, maintain account functionality, comply with legal obligations, resolve disputes, prevent fraud, and enforce our policies.
 </p>
 
 <p style={{ marginBottom: 24 }}>
@@ -356,7 +356,7 @@ Deleting your account permanently removes your account and associated personal i
 </p>
 
 <p style={{ marginBottom: 24 }}>
-  To help protect your information, ShadowSmile uses industry-standard security measures including encrypted connections, secure authentication, access controls, and infrastructure designed to prevent unauthorized access, disclosure, alteration, or destruction.
+  To help protect your information, BlackMaltra uses industry-standard security measures including encrypted connections, secure authentication, access controls, and infrastructure designed to prevent unauthorized access, disclosure, alteration, or destruction.
 </p>
 
 <p>
@@ -376,11 +376,11 @@ Deleting your account permanently removes your account and associated personal i
 </h2>
 
 <p style={{ marginBottom: 24 }}>
-  ShadowSmile may update this Privacy Policy from time to time to reflect improvements to the platform, legal requirements, or changes to our services.
+  BlackMaltra may update this Privacy Policy from time to time to reflect improvements to the platform, legal requirements, or changes to our services.
 </p>
 
 <p>
-  Whenever significant changes are made, we will update the Effective Date displayed at the top of this Privacy Policy. Continued use of ShadowSmile after those changes become effective constitutes acceptance of the updated Privacy Policy.
+  Whenever significant changes are made, we will update the Effective Date displayed at the top of this Privacy Policy. Continued use of BlackMaltra after those changes become effective constitutes acceptance of the updated Privacy Policy.
 </p>
 
 <hr style={{ margin: "30px 0", borderColor: "#25252D" }} />
@@ -397,12 +397,12 @@ Deleting your account permanently removes your account and associated personal i
 
 <p style={{ marginBottom: 24 }}>
   If you have questions about this Privacy Policy, your personal information,
-  or your privacy rights, you may contact the ShadowSmile team through our
+  or your privacy rights, you may contact the BlackMaltra team through our
   official support channels as they become available.
 </p>
 
 <p style={{ marginBottom: 24 }}>
-  As ShadowSmile continues to grow, additional contact information—including a
+  As BlackMaltra continues to grow, additional contact information—including a
   dedicated support email, official website, and help center—will be provided
   within the application and on our official website.
 </p>
