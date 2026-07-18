@@ -7,6 +7,8 @@
 
   import Image from "next/image";
 
+  import PostCard from "../../../components/PostCard";
+
   import {
     useParams,
     useRouter,
@@ -31,7 +33,9 @@ type Post = {
   shadow_text: string | null;
   smile_text: string | null;
   content: string | null;
-  image_url?: string | null;
+  media_url?: string | null;
+
+  media_type?: "image" | "video" | null;
   created_at: string;
 };
 
@@ -91,6 +95,15 @@ const [saving, setSaving] =
 
 const [avatarFile, setAvatarFile] =
   useState<File | null>(null);
+
+const [openComments, setOpenComments] =
+  useState<string | null>(null);
+
+const [commentTexts, setCommentTexts] =
+  useState<Record<string, string>>({});
+
+const [comments, setComments] =
+  useState<any[]>([]);
 
 /* ================= FOLLOW SYSTEM ================= */
 
@@ -327,9 +340,134 @@ useEffect(() => {
   profile,
 ]);
 
+/* ================= LIKE ================= */
+
+async function likePost(postId: string) {
+  if (!currentUser) {
+    router.push("/signin");
+    return;
+  }
+
+  const { data: existingLike } =
+    await supabase
+      .from("reactions")
+      .select("id")
+      .eq("post_id", postId)
+      .eq("user_id", currentUser.id)
+      .eq("type", "like")
+      .maybeSingle();
+
+  if (existingLike) {
+    await supabase
+      .from("reactions")
+      .delete()
+      .eq("id", existingLike.id);
+  } else {
+    await supabase
+      .from("reactions")
+      .insert({
+        post_id: postId,
+        user_id: currentUser.id,
+        type: "like",
+      });
+  }
+
+await loadPosts();
+}
+
+/* ================= LOAD COMMENTS ================= */
+
+async function loadComments(postIds: string[]) {
+  if (!id) return;
+
+    const { data: commentsData, error } = await supabase
+      .from("comments")
+      .select(`
+        *,
+        profiles:user_id (
+          id,
+          handle,
+          avatar_url
+        )
+      `)
+      .in("post_id", postIds)
+      .order("created_at", {
+        ascending: true,
+      });
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  setComments(
+  (commentsData || []).map((comment) => ({
+    ...comment,
+    profiles: comment.profiles ?? {
+      id: comment.user_id,
+      handle: "unknown",
+      avatar_url: null,
+    },
+  }))
+);
+}
+
+/* ================= COMMENT ================= */
+
+async function addComment(postId: string) {
+  if (!currentUser) {
+    router.push("/signin");
+    return;
+  }
+
+  if (!commentTexts[postId]?.trim()) {
+    return;
+  }
+
+  const { error } =
+    await supabase
+      .from("comments")
+      .insert({
+        post_id: postId,
+        user_id: currentUser.id,
+        content: commentTexts[postId],
+      });
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  setCommentTexts((prev) => ({
+  ...prev,
+  [postId]: "",
+}));
+
+await loadComments(
+  posts.map((p) => p.id)
+);
+
+setOpenComments(null);
+}
+
+
+/* ================= SHARE ================= */
+
+async function sharePost(postId: string) {
+  const link =
+    `${window.location.origin}/post/${postId}`;
+
+  try {
+    await navigator.clipboard.writeText(link);
+    console.log("Link copied");
+  } catch {
+    prompt("Copy this link:", link);
+  }
+}
+
+
 /* ================= LOAD POSTS ================= */
 
-  useEffect(() => {
   async function loadPosts() {
     try {
       if (!id) return;
@@ -350,10 +488,34 @@ useEffect(() => {
 
       const postsData = data || [];
 
-      setPosts(postsData);
+const postIds =
+  postsData.map((p) => p.id);
 
-      const postIds =
-        postsData.map((p) => p.id);
+const { data: reactionsData } =
+  await supabase
+    .from("reactions")
+    .select("post_id, type");
+
+/* Format posts with shared data (future lib/posts.ts) */
+
+const postsWithLikes =
+  postsData.map((post) => {
+    const likes =
+      reactionsData?.filter(
+        (r) =>
+          r.post_id === post.id &&
+          r.type === "like"
+      ).length || 0;
+
+    return {
+      ...post,
+      like_count: likes,
+    };
+  });
+
+setPosts(postsWithLikes);
+
+      await loadComments(postIds);
 
       let likesReceived = 0;
 
@@ -370,16 +532,18 @@ useEffect(() => {
           ).length || 0;
       }
 
-      setStats({
-        postCount:
-          postsData.length,
+            setStats({
+        postCount: postsData.length,
         likesReceived,
       });
-    } finally {
+
+    } catch (error) {
+      console.error(error);
     }
   }
 
-    loadPosts();
+useEffect(() => {
+   void loadPosts();
   }, [id]);
 
 /* ================= FOLLOW SYSTEM ================= */
@@ -569,6 +733,7 @@ if (
           alt="avatar"
           fill
           unoptimized
+          priority
           style={{
             objectFit: "cover",
           }}
@@ -1084,76 +1249,25 @@ type="button"
           </p>
         ) : (
           posts.map((p) => (
-           <div
-  key={p.id}
-  style={{
-    ...styles.card,
-    overflowWrap: "anywhere",
-  }}
-              onClick={() =>
-                router.push(`/post/${p.id}`)
-              }
-            >
-              {p.post_type === "flip" ? (
-                <>
-                  <p>
-                    <b>Veil:</b> {p.shadow_text}
-                  </p>
-
-                  <p
-                    style={{
-                      color: "#39FF88",
-                    }}
-                  >
-                    <b>Unveil:</b>{" "}
-                    {p.smile_text}
-                  </p>
-                </>
-              ) : (
-                <p>{p.content}</p>
-              )}
-
-{p.image_url && (
-  <img
-    src={p.image_url}
-    alt="Post"
-    style={{
-      width: "100%",
-      marginTop: 14,
-      borderRadius: 14,
-      maxHeight: 450,
-      objectFit: "cover",
-    }}
-  />
-)}
-
-              <div style={styles.actions}>
-                <button
-                  style={styles.actionBtn}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    alert("Likes coming soon");
-                  }}
-                >
-                  <Heart size={14} />
-                </button>
-
-                <button
-                  style={styles.actionBtn}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    alert("Comments coming soon");
-                  }}
-                >
-                  <MessageSquare size={14} />
-                </button>
-              </div>
-            </div>
-          ))
-        )}
-      </section>
-    </main>
-  );
+           <PostCard
+             key={p.id}
+             post={p}
+             showHandle={false}
+             isMobile={isMobile}
+             openComments={openComments}
+             setOpenComments={setOpenComments}
+             commentTexts={commentTexts}
+             comments={comments}
+             setCommentTexts={setCommentTexts}
+             likePost={likePost}
+             addComment={addComment}
+             sharePost={sharePost}
+           />
+         ))
+       )}
+     </section>
+   </main>
+ );
 }
 
 const styles: Record<string, React.CSSProperties> = {

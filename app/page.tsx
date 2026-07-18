@@ -14,6 +14,8 @@ import {
 import { supabase } from "../lib/supabase-browser";
 import { User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
+import PostCard from "../components/PostCard";
+import { getPosts } from "../lib/posts";
 
 /* ================= TYPES ================= */
 
@@ -29,7 +31,8 @@ type Post = {
   shadow_text: string | null;
   smile_text: string | null;
   content: string | null;
-  image_url?: string | null;
+  media_url?: string | null;
+  media_type?: "image" | "video" | null;
 
   post_type: string;
   created_at: string;
@@ -39,6 +42,18 @@ type Post = {
   profiles?: {
     handle?: string | null;
     is_private?: boolean | null;
+  } | null;
+};
+
+type Comment = {
+  id: string;
+  post_id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+
+  profiles?: {
+    handle: string | null;
   } | null;
 };
 
@@ -64,6 +79,7 @@ export default function Page() {
 
   const [openComments, setOpenComments] = useState<string | null>(null);
   const [commentTexts, setCommentTexts] = useState<Record<string, string>>({});
+  const [comments, setComments] = useState<Comment[]>([]);
 
   /* ================= USER ================= */
 
@@ -108,45 +124,14 @@ export default function Page() {
   /* ================= POSTS ================= */
 
   async function loadPosts() {
-    const {
-  data: postsData,
-  error: postError,
-} = await supabase
-  .from("posts")
-  .select(`
-  *,
-  profiles(handle, is_private)
-`)
-  .order("created_at", {
-    ascending: false,
-  });
+  try {
+    const data = await getPosts();
 
-    if (postError) {
-      console.error(
-        "Post error:",
-        postError
-      );
-      return;
-    }
-
-    const { data: reactionsData } = await supabase
-      .from("reactions")
-      .select("post_id, type");
-
-    const formatted = (postsData || []).map((post: Post) => {
-      const likes =
-        reactionsData?.filter(
-          (r) => r.post_id === post.id && r.type === "like"
-        ).length || 0;
-
-      return {
-        ...post,
-        like_count: likes,
-      };
-    });
-
-    setPosts(formatted);
+    setPosts(data);
+  } catch (error) {
+    console.error(error);
   }
+}
 
   useEffect(() => {
     loadUser();
@@ -169,7 +154,12 @@ useEffect(() => {
 }, [loading, user, router]);
 
   useEffect(() => {
-  loadPosts();
+  async function fetchData() {
+    await loadPosts();
+    await loadComments();
+  }
+
+  fetchData();
 }, [user]);
 
 useEffect(() => {
@@ -199,7 +189,7 @@ useEffect(() => {
     return;
   }
 
-  const { data: existingLike } =
+  const { data: existingLike, error: likeCheckError } =
     await supabase
       .from("reactions")
       .select("id")
@@ -208,12 +198,36 @@ useEffect(() => {
       .eq("type", "like")
       .maybeSingle();
 
+console.log(
+  "EXISTING LIKE CHECK:",
+  existingLike,
+  likeCheckError
+);
+
   if (existingLike) {
-    await supabase
-      .from("reactions")
-      .delete()
-      .eq("id", existingLike.id);
-  } else {
+  const { data: deletedLike, error } = await supabase
+    .from("reactions")
+    .delete()
+    .eq("id", existingLike.id)
+    .select();
+
+  console.log(
+    "DELETE RESULT:",
+    deletedLike,
+    error
+  );
+
+  if (error) {
+    console.error(
+      "LIKE DELETE ERROR:",
+      error
+    );
+    return;
+  }
+
+} else {
+
+  const { error } =
     await supabase
       .from("reactions")
       .insert({
@@ -221,9 +235,82 @@ useEffect(() => {
         user_id: user.id,
         type: "like",
       });
+
+  if (error) {
+    console.error(
+      "LIKE INSERT ERROR:",
+      error
+    );
+    return;
+  }
+}
+
+await loadPosts();
+}
+
+  /* ================= LOAD COMMENTS ================= */
+
+async function loadComments() {
+  const { data: commentsData, error } = await supabase
+    .from("comments")
+    .select("*")
+    .order("created_at", {
+      ascending: true,
+    });
+
+  if (error) {
+    console.log(
+      "COMMENT LOAD ERROR:",
+      error
+    );
+
+    alert(
+      JSON.stringify(error, null, 2)
+    );
+
+    return;
   }
 
-  loadPosts();
+const userIds = [
+  ...new Set(
+    (commentsData || []).map(
+      (comment) => comment.user_id
+    )
+  ),
+];
+
+const {
+  data: profiles,
+  error: profileError,
+} = await supabase
+  .from("profiles")
+  .select(`
+    id,
+    handle,
+    avatar_url
+  `)
+  .in("id", userIds);
+
+if (profileError) {
+  console.error(profileError);
+}
+
+  const profileMap = Object.fromEntries(
+  (profiles || []).map((profile) => [
+    profile.id,
+    profile,
+  ])
+);
+
+const mergedComments = (commentsData || []).map(
+  (comment) => ({
+    ...comment,
+    profiles:
+      profileMap[comment.user_id] || null,
+  })
+);
+
+setComments(mergedComments);
 }
 
   /* ================= COMMENT ================= */
@@ -259,6 +346,7 @@ if (error) {
 }
 
 loadPosts();
+loadComments();
 
     setCommentTexts((prev) => ({
   ...prev,
@@ -401,133 +489,20 @@ if (!user) {
   )}
 
   {posts.map((p) => (
-  <div
-    key={p.id}
-    style={{
-  ...styles.card,
-  padding: isMobile ? 14 : 18,
-}}
-  >
-         {!p.is_anonymous &&
-  p.user_id && (
-    p.profiles?.is_private ? (
-      <span style={styles.profileLink}>
-        Private Profile
-      </span>
-    ) : (
-      <Link
-        href={`/profile/${p.user_id}`}
-        style={styles.profileLink}
-        onClick={(e) =>
-          e.stopPropagation()
-        }
-      >
-        {p.profiles?.handle
-          ? `@${p.profiles.handle}`
-          : "View Profile"}
-      </Link>
-    )
-)}
-
-            <div
-  onClick={() =>
-    router.push(`/post/${p.id}`)
-  }
-  style={{
-    cursor: "pointer",
-    overflowWrap: "anywhere",
-    wordBreak: "break-word",
-  }}
->
-  {p.post_type === "flip" ? (
-  <>
-    <p>
-      <b>Veil:</b> {p.shadow_text}
-    </p>
-
-    <p style={{ color: "#39FF88" }}>
-      <b>Unveil:</b> {p.smile_text}
-    </p>
-  </>
-) : (
-  <p>{p.content}</p>
-)}
-
-{p.image_url && (
-  <img
-    src={p.image_url}
-    alt="Post"
-    style={{
-      width: "100%",
-      marginTop: 14,
-      borderRadius: 14,
-      maxHeight: 450,
-      objectFit: "cover",
-    }}
-  />
-)}
-</div>
-
-              <div
-                style={styles.actions}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  style={styles.actionBtn}
-                  onClick={() => likePost(p.id)}
-                >
-                  <Heart size={14} /> {p.like_count || 0}
-                </button>
-
-                <button
-                  style={styles.actionBtn}
-                  onClick={() =>
-                    setOpenComments(
-                      openComments === p.id ? null : p.id
-                    )
-                  }
-                >
-                  <MessageSquare size={14} /> Comment
-                </button>
-
-                <button
-                  style={styles.actionBtn}
-                  onClick={() => sharePost(p.id)}
-                >
-                  <Share2 size={14} /> Share
-                </button>
-              </div>
-
-              {openComments === p.id && (
-                <div style={styles.commentBox}>
-                  <input
-                    value={
-  commentTexts[
-    p.id
-  ] || ""
-}
-                    onChange={(e) =>
-  setCommentTexts(
-    (prev) => ({
-      ...prev,
-      [p.id]:
-        e.target.value,
-    })
-  )
-}
-                    placeholder="Write comment..."
-                    style={styles.commentInput}
-                  />
-
-                  <button
-                    onClick={() => addComment(p.id)}
-                    style={styles.commentBtn}
-                  >
-                    Send
-                  </button>
-                </div>
-              )}
-            </div>
+  <PostCard
+  key={p.id}
+  post={p}
+  showHandle={true}
+  isMobile={isMobile}
+  openComments={openComments}
+  setOpenComments={setOpenComments}
+  commentTexts={commentTexts}
+  comments={comments}
+  setCommentTexts={setCommentTexts}
+  likePost={likePost}
+  addComment={addComment}
+  sharePost={sharePost}
+/>
         ))}
       </section>
 
@@ -631,7 +606,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
 
   feed: {
-    maxWidth: 600,
+    maxWidth: 900,
+    width: "100%",
     margin: "0 auto",
     padding: 16,
   },

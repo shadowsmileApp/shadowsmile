@@ -15,7 +15,9 @@ type Post = {
   shadow_text: string | null;
   smile_text: string | null;
   content: string | null;
-  image_url?: string | null;
+
+  media_url?: string | null;
+  media_type?: string | null;
 
   post_type: string;
   created_at: string;
@@ -227,9 +229,9 @@ if (!user) {
   <p>{post.content}</p>
 )}
 
-{post.image_url && (
+{post.media_url && post.media_type === "image" && (
   <img
-    src={post.image_url}
+    src={post.media_url}
     alt="Post"
     style={{
       width: "100%",
@@ -238,6 +240,21 @@ if (!user) {
       marginBottom: 16,
       maxHeight: 500,
       objectFit: "cover",
+    }}
+  />
+)}
+
+{post.media_url && post.media_type === "video" && (
+  <video
+    src={post.media_url}
+    controls
+    style={{
+      width: "100%",
+      borderRadius: 16,
+      marginTop: 16,
+      marginBottom: 16,
+      maxHeight: 500,
+      objectFit: "contain",
     }}
   />
 )}

@@ -38,12 +38,23 @@ export default function CreatePage() {
   const [cameraOpen, setCameraOpen] =
     useState(false);
 
+  const [facingMode, setFacingMode] =
+    useState<"user" | "environment">(
+      "environment"
+    );
+
   const [isAnonymous, setIsAnonymous] =
     useState(false);
 
   const [loadingUser, setLoadingUser] = useState(true);
 
   const [posting, setPosting] = useState(false);
+
+  const [isRecording, setIsRecording] =
+    useState(false);
+
+  const mediaRecorderRef =
+    useRef<MediaRecorder | null>(null);
 
   /* ================= LOAD USER ================= */
 
@@ -91,6 +102,244 @@ useEffect(() => {
   router,
 ]);
 
+async function openCamera() {
+
+  streamRef.current
+    ?.getTracks()
+    .forEach((track) => track.stop());
+
+  try {
+    const stream =
+      await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: {
+            ideal: facingMode,
+          },
+        },
+        audio: true,
+      });
+
+        streamRef.current = stream;
+
+    setCameraOpen(true);
+
+  } catch (error: any) {
+  console.error(error);
+
+  if (error.name === "NotAllowedError") {
+    alert(
+      "Camera and microphone permissions were denied."
+    );
+  } else if (error.name === "NotFoundError") {
+    alert(
+      "No camera or microphone was found."
+    );
+  } else {
+    alert(
+      "Unable to access your camera and microphone."
+    );
+  }
+}
+}
+
+async function toggleRecording() {
+  if (!streamRef.current) {
+    return;
+  }
+
+  if (isRecording) {
+    mediaRecorderRef.current?.stop();
+    setIsRecording(false);
+    return;
+  }
+
+  const chunks: Blob[] = [];
+
+  const recorder =
+  new MediaRecorder(
+    streamRef.current
+  );
+
+  mediaRecorderRef.current = recorder;
+
+  recorder.ondataavailable = (event) => {
+    if (event.data.size > 0) {
+      chunks.push(event.data);
+    }
+  };
+
+  recorder.onstop = () => {
+    const blob = new Blob(chunks, {
+      type: "video/webm",
+    });
+
+    const file = new File(
+      [blob],
+      "camera-video.webm",
+      {
+        type: "video/webm",
+      }
+    );
+
+    setImage(file);
+
+    setImagePreview(
+      URL.createObjectURL(blob)
+    );
+
+    console.log(
+      "Video captured"
+    );
+  };
+
+  recorder.start();
+
+  setIsRecording(true);
+}
+
+async function capturePhoto() {
+
+  if (
+    !videoRef.current ||
+    !streamRef.current
+  ) {
+    return;
+  }
+
+  const video =
+    videoRef.current;
+
+
+  const canvas =
+    document.createElement("canvas");
+
+
+  canvas.width =
+    video.videoWidth;
+
+  canvas.height =
+    video.videoHeight;
+
+
+  const context =
+    canvas.getContext("2d");
+
+
+  if (!context) {
+    return;
+  }
+
+
+  context.drawImage(
+    video,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+
+  canvas.toBlob((blob) => {
+
+    if (!blob) {
+      return;
+    }
+
+
+    const file =
+      new File(
+        [blob],
+        "camera-photo.jpg",
+        {
+          type: "image/jpeg",
+        }
+      );
+
+
+    setImage(file);
+
+    setImagePreview(
+      URL.createObjectURL(blob)
+    );
+
+
+    console.log(
+      "Photo captured"
+    );
+
+
+  }, "image/jpeg");
+
+}
+
+async function switchCamera() {
+
+  streamRef.current
+    ?.getTracks()
+    .forEach((track) => {
+      track.stop();
+    });
+
+
+  const newMode =
+    facingMode === "environment"
+      ? "user"
+      : "environment";
+
+
+  setFacingMode(newMode);
+
+
+  try {
+
+    const stream =
+  await navigator.mediaDevices.getUserMedia({
+    video: {
+      facingMode: {
+        ideal: newMode,
+      },
+    },
+    audio: true,
+  });
+
+    streamRef.current = stream;
+
+
+    if (videoRef.current) {
+      videoRef.current.srcObject =
+        stream;
+    }
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      "Unable to switch camera."
+    );
+
+  }
+
+}
+
+useEffect(() => {
+  if (
+    !cameraOpen ||
+    !videoRef.current ||
+    !streamRef.current
+  ) {
+    return;
+  }
+
+  const video = videoRef.current;
+
+  video.srcObject = streamRef.current;
+
+  video.play().catch(console.error);
+
+}, [cameraOpen]);
+
   /* ================= CREATE POST ================= */
 
   async function createPost() {
@@ -120,13 +369,24 @@ if (
 let imageUrl: string | null = null;
 
 if (image) {
+  const safeName = image.name.replace(
+    /[^a-zA-Z0-9._-]/g,
+    "_"
+  );
+
   const fileName =
-    `${user.id}/${Date.now()}-${image.name}`;
+    `${user.id}/${Date.now()}-${safeName}`;
 
   const { error: uploadError } =
     await supabase.storage
       .from("posts")
-      .upload(fileName, image);
+      .upload(
+        fileName,
+        image,
+        {
+          contentType: image.type,
+        }
+      );
 
   if (uploadError) {
     console.error(uploadError);
@@ -144,25 +404,35 @@ if (image) {
 }
 
 const payload =
-      mode === "structured"
-        ? {
-  user_id: user.id,
-  post_type: "flip",
-  shadow_text: veil,
-  smile_text: unveil,
-  content: null,
-  image_url: imageUrl,
-  is_anonymous: isAnonymous,
-}
-        : {
-            user_id: user.id,
-            post_type: "normal",
-            content: text,
-            shadow_text: null,
-            smile_text: null,
-            image_url: imageUrl,
-            is_anonymous: isAnonymous,
-          };
+  mode === "structured"
+    ? {
+        user_id: user.id,
+        post_type: "flip",
+        shadow_text: veil,
+        smile_text: unveil,
+        content: null,
+        media_url: imageUrl,
+        media_type: image?.type.startsWith("video")
+          ? "video"
+          : image
+          ? "image"
+          : null,
+        is_anonymous: isAnonymous,
+      }
+    : {
+        user_id: user.id,
+        post_type: "normal",
+        content: text,
+        shadow_text: null,
+        smile_text: null,
+        media_url: imageUrl,
+        media_type: image?.type.startsWith("video")
+          ? "video"
+          : image
+          ? "image"
+          : null,
+        is_anonymous: isAnonymous,
+      };
 
     const { error } = await supabase.from("posts").insert(payload);
 
@@ -339,7 +609,7 @@ if (loadingUser) {
   <button
     type="button"
     style={styles.mediaButton}
-    onClick={() => cameraInputRef.current?.click()}
+    onClick={openCamera}
   >
     📷 Camera
   </button>
@@ -383,12 +653,20 @@ if (loadingUser) {
 />
 
   {imagePreview && (
+  image?.type.startsWith("video") ? (
+    <video
+      src={imagePreview}
+      controls
+      style={styles.previewImage}
+    />
+  ) : (
     <img
       src={imagePreview}
       alt="Preview"
       style={styles.previewImage}
     />
-  )}
+  )
+)}
 </div>
         )}
 
@@ -424,6 +702,113 @@ if (loadingUser) {
           {posting ? "Posting..." : "Post"}
         </button>
       </div>
+
+{cameraOpen && (
+  <div
+    style={{
+      position: "fixed",
+      inset: 0,
+      background: "#000",
+      zIndex: 9999,
+      display: "flex",
+      flexDirection: "column",
+    }}
+  >
+
+<div
+  style={{
+    position: "absolute",
+    bottom: 30,
+    left: 0,
+    right: 0,
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 40,
+    zIndex: 10001,
+  }}
+>
+
+  {/* RECORD */}
+  <button
+    type="button"
+    onClick={toggleRecording}
+    style={styles.recordButton}
+  >
+    <div
+      style={{
+        width: isRecording ? 28 : 34,
+        height: isRecording ? 28 : 34,
+        borderRadius: isRecording ? 6 : "50%",
+        background: "#ff0000",
+      }}
+    />
+  </button>
+
+
+  {/* PHOTO */}
+  <button
+    type="button"
+    onClick={capturePhoto}
+    style={styles.captureButton}
+  >
+    <div
+      style={{
+        width: 55,
+        height: 55,
+        borderRadius: "50%",
+        background: "#fff",
+      }}
+    />
+  </button>
+
+
+  {/* SWITCH CAMERA */}
+  <button
+    type="button"
+    onClick={switchCamera}
+    style={styles.recordButton}
+  >
+    🔄
+  </button>
+
+</div>
+
+{/* CLOSE TOP RIGHT */}
+<button
+  type="button"
+  onClick={() => {
+  if (isRecording) {
+    mediaRecorderRef.current?.stop();
+    setIsRecording(false);
+  }
+
+  streamRef.current?.getTracks().forEach((track) => track.stop());
+
+  streamRef.current = null;
+
+  setCameraOpen(false);
+}}
+  style={styles.closeCameraButton}
+>
+  ✕
+</button>
+
+    <video
+  ref={videoRef}
+  autoPlay
+  playsInline
+  muted
+  style={{
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+  }}
+/>
+
+  </div>
+)}
+
     </main>
   );
 }
@@ -567,5 +952,71 @@ previewImage: {
   border: "none",
   cursor: "pointer",
   transition: "all .2s ease",
+},
+
+closeCameraButton: {
+  position: "absolute",
+  top: 20,
+  right: 20,
+  width: 44,
+  height: 44,
+  borderRadius: "50%",
+  border: "none",
+  background: "rgba(0,0,0,0.65)",
+  color: "#fff",
+  fontSize: 24,
+  fontWeight: 700,
+  cursor: "pointer",
+  zIndex: 10001,
+},
+
+cameraControls: {
+  position: "absolute",
+  bottom: 30,
+  left: 0,
+  right: 0,
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  gap: 35,
+  zIndex: 10000,
+},
+
+recordButton: {
+  width: 82,
+  height: 82,
+  borderRadius: "50%",
+  border: "4px solid white",
+  background: "rgba(0,0,0,.35)",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  cursor: "pointer",
+},
+
+captureButton: {
+  width: 96,
+  height: 96,
+  borderRadius: "50%",
+  border: "5px solid white",
+  background: "rgba(0,0,0,.35)",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  cursor: "pointer",
+},
+
+recordIcon: {
+  width: 26,
+  height: 26,
+  borderRadius: "50%",
+  background: "#ff2d2d",
+},
+
+stopIcon: {
+  width: 24,
+  height: 24,
+  borderRadius: 6,
+  background: "#ff2d2d",
 },
 };
