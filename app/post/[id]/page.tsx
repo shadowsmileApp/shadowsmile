@@ -212,7 +212,35 @@ if (!user) {
   }
 
   return (
-    <main style={styles.page}>
+  <main
+    style={{
+      ...styles.page,
+      position: "relative",
+    }}
+  >
+
+    <button
+      onClick={() =>
+        router.back()
+      }
+      style={{
+        position: "absolute",
+        top: 20,
+        right: 20,
+        width: 40,
+        height: 40,
+        borderRadius: "50%",
+        border: "1px solid #333",
+        background: "#15151A",
+        color: "#fff",
+        fontSize: 22,
+        cursor: "pointer",
+        zIndex: 20,
+      }}
+    >
+      ×
+    </button>
+
       {/* POST CARD */}
       <div style={styles.card}>
         {post.post_type === "flip" ? (
@@ -238,8 +266,8 @@ if (!user) {
       borderRadius: 16,
       marginTop: 16,
       marginBottom: 16,
-      maxHeight: 500,
-      objectFit: "cover",
+      maxHeight: "none",
+      objectFit: "contain",
     }}
   />
 )}
@@ -253,7 +281,7 @@ if (!user) {
       borderRadius: 16,
       marginTop: 16,
       marginBottom: 16,
-      maxHeight: 500,
+      maxHeight: "none",
       objectFit: "contain",
     }}
   />

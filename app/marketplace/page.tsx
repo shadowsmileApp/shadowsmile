@@ -1,6 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 export default function MarketplacePage() {
+
+const router = useRouter();
   const sections = [
     {
       title: "Profile Themes",
@@ -56,6 +60,23 @@ export default function MarketplacePage() {
           margin: "0 auto",
         }}
       >
+
+<button
+  onClick={() => router.push("/")}
+  style={{
+    marginBottom: 20,
+    padding: "10px 16px",
+    borderRadius: 12,
+    border: "1px solid #333",
+    background: "#15151A",
+    color: "#fff",
+    cursor: "pointer",
+    fontWeight: 700,
+  }}
+>
+  ← Back Home
+</button>
+
         <h1
           style={{
             fontSize: 32,

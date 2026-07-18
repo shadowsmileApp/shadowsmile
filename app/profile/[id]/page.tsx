@@ -84,6 +84,9 @@ const [isMobile, setIsMobile] =
 const [bioExpanded, setBioExpanded] =
   useState(false);
 
+const [activeTab, setActiveTab] =
+  useState<"media" | "posts" | "likes">("media");
+
 const [editName, setEditName] =
   useState("");
 
@@ -494,45 +497,36 @@ const postIds =
 const { data: reactionsData } =
   await supabase
     .from("reactions")
-    .select("post_id, type");
+    .select("post_id,type")
+    .in("post_id", postIds);
 
 /* Format posts with shared data (future lib/posts.ts) */
 
-const postsWithLikes =
-  postsData.map((post) => {
-    const likes =
-      reactionsData?.filter(
-        (r) =>
-          r.post_id === post.id &&
-          r.type === "like"
-      ).length || 0;
+const likeCounts: Record<string, number> = {};
 
-    return {
-      ...post,
-      like_count: likes,
-    };
-  });
+for (const reaction of reactionsData || []) {
+  if (reaction.type !== "like") continue;
+
+  likeCounts[reaction.post_id] =
+    (likeCounts[reaction.post_id] || 0) + 1;
+}
+
+const postsWithLikes =
+  postsData.map((post) => ({
+    ...post,
+    like_count: likeCounts[post.id] || 0,
+  }));
 
 setPosts(postsWithLikes);
 
       await loadComments(postIds);
 
-      let likesReceived = 0;
+      const likesReceived =
+        reactionsData?.filter(
+          (r) => r.type === "like"
+        ).length || 0;
 
-      if (postIds.length > 0) {
-        const { data: reactions } =
-          await supabase
-            .from("reactions")
-            .select("post_id, type")
-            .in("post_id", postIds);
-
-        likesReceived =
-          reactions?.filter(
-            (r) => r.type === "like"
-          ).length || 0;
-      }
-
-            setStats({
+      setStats({
         postCount: postsData.length,
         likesReceived,
       });
@@ -667,6 +661,14 @@ const profileBio =
       : `@member${profile?.id?.slice(0, 4) || "0000"}`;
 
   const isOwnProfile = currentUser?.id === profile?.id;
+
+  const mediaPosts = posts.filter(
+    (post) => post.media_url
+  );
+
+  const textPosts = posts.filter(
+    (post) => !post.media_url
+  );
 
   /* ================= LOADING ================= */
 
@@ -1047,7 +1049,6 @@ onClick={() =>
   </button>
 )}
 
-
 {!isOwnProfile && isFollowing !== null ? (
   <>
     <button
@@ -1237,35 +1238,142 @@ type="button"
 )}
 </section>
 
-      {/* POSTS */}
-      <section style={styles.feed}>
-        <h2 style={styles.sectionTitle}>
-          Posts
-        </h2>
+      {/* PROFILE TABS */}
 
-        {posts.length === 0 ? (
-          <p style={styles.emptyText}>
-            No posts yet.
-          </p>
-        ) : (
-          posts.map((p) => (
-           <PostCard
-             key={p.id}
-             post={p}
-             showHandle={false}
-             isMobile={isMobile}
-             openComments={openComments}
-             setOpenComments={setOpenComments}
-             commentTexts={commentTexts}
-             comments={comments}
-             setCommentTexts={setCommentTexts}
-             likePost={likePost}
-             addComment={addComment}
-             sharePost={sharePost}
-           />
-         ))
-       )}
-     </section>
+<div style={styles.profileTabs}>
+  <button
+    type="button"
+    onClick={() => setActiveTab("media")}
+    style={{
+      ...styles.profileTab,
+      ...(activeTab === "media"
+        ? styles.profileTabActive
+        : {}),
+    }}
+  >
+    Media
+  </button>
+
+  <button
+    type="button"
+    onClick={() => setActiveTab("posts")}
+    style={{
+      ...styles.profileTab,
+      ...(activeTab === "posts"
+        ? styles.profileTabActive
+        : {}),
+    }}
+  >
+    Posts
+  </button>
+
+  <button
+    type="button"
+    onClick={() => setActiveTab("likes")}
+    style={{
+      ...styles.profileTab,
+      ...(activeTab === "likes"
+        ? styles.profileTabActive
+        : {}),
+    }}
+  >
+    Likes
+  </button>
+</div>
+
+{/* POSTS */}
+
+<section style={styles.feed}>
+
+  {activeTab === "media" && (
+  mediaPosts.length === 0 ? (
+    <p style={styles.emptyText}>
+      No photos or videos yet.
+    </p>
+  ) : (
+    <div style={styles.mediaGrid}>
+      {mediaPosts.map((p) => (
+        <div
+          key={p.id}
+          style={styles.mediaTile}
+          onClick={() =>
+            router.push(`/post/${p.id}`)
+          }
+        >
+          {p.media_type === "video" ? (
+            <video
+              src={p.media_url || ""}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+              }}
+            />
+          ) : (
+            <Image
+              src={p.media_url || ""}
+              alt="media"
+              fill
+              unoptimized
+              style={styles.mediaImage}
+            />
+          )}
+
+          {p.media_type === "video" && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 32,
+                color: "#fff",
+                background:
+                  "rgba(0,0,0,.25)",
+              }}
+            >
+              ▶
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+)}
+
+  {activeTab === "posts" && (
+    textPosts.length === 0 ? (
+      <p style={styles.emptyText}>
+        No text posts yet.
+      </p>
+    ) : (
+      textPosts.map((p) => (
+        <PostCard
+          key={p.id}
+          post={p}
+          showHandle={false}
+          isMobile={isMobile}
+          openComments={openComments}
+          setOpenComments={setOpenComments}
+          commentTexts={commentTexts}
+          comments={comments}
+          setCommentTexts={setCommentTexts}
+          likePost={likePost}
+          addComment={addComment}
+          sharePost={sharePost}
+        />
+      ))
+    )
+  )}
+
+  {activeTab === "likes" && (
+    <p style={styles.emptyText}>
+      Likes tab coming soon.
+    </p>
+  )}
+
+</section>
    </main>
  );
 }
@@ -1614,8 +1722,66 @@ mobileActionButtons: {
     cursor: "pointer",
   },
 
-  hiddenInput: {
-    display: "none",
-  },
+profileTabs: {
+  display: "flex",
+  gap: 12,
+  marginTop: 24,
+  marginBottom: 24,
+},
+
+profileTab: {
+  flex: 1,
+  background: "#15151A",
+  border: "1px solid #25252D",
+  color: "#999",
+  borderRadius: 14,
+  padding: "14px 0",
+  fontWeight: 700,
+  cursor: "pointer",
+  transition: "0.2s",
+},
+
+profileTabActive: {
+  background: "linear-gradient(135deg,#7B2FFF,#9B5DFF)",
+  border: "none",
+  color: "#fff",
+},
+
+mediaGrid: {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fill, minmax(220px,1fr))",
+  gap: 16,
+},
+
+mediaTile: {
+  position: "relative",
+  aspectRatio: "1 / 1",
+  borderRadius: 18,
+  overflow: "hidden",
+  cursor: "pointer",
+  background: "#15151A",
+  border: "1px solid #25252D",
+},
+
+mediaImage: {
+  objectFit: "cover",
+},
+
+mediaOverlay: {
+  position: "absolute",
+  inset: 0,
+  background: "rgba(0,0,0,.25)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: "#fff",
+  fontWeight: 700,
+  opacity: 0,
+  transition: "opacity .2s",
+},
+
+hiddenInput: {
+  display: "none",
+},
 
 };
