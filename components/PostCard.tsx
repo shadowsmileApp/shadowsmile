@@ -1,5 +1,6 @@
 "use client";
 
+import PostMenu from "./PostMenu";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -11,6 +12,10 @@ import {
 
 type PostCardProps = {
   post: any;
+
+  ownedByUser: boolean;
+
+  isProfilePage?: boolean;
 
   showHandle?: boolean;
 
@@ -38,6 +43,8 @@ type PostCardProps = {
 };
 export default function PostCard({
   post,
+  ownedByUser = false,
+  isProfilePage = false,
   showHandle = true,
   isMobile = false,
   openComments,
@@ -53,6 +60,7 @@ export default function PostCard({
   const router = useRouter();
 
   const [expanded, setExpanded] = useState(false);
+
   const [liked, setLiked] = useState(
     post.liked_by_user || false
   );
@@ -70,6 +78,7 @@ export default function PostCard({
 
   <div
     style={{
+      position: "relative",
       background:
         "linear-gradient(180deg,#111,#0D0D12)",
       border: "1px solid #222",
@@ -78,37 +87,51 @@ export default function PostCard({
       marginBottom: 14,
     }}
   >
+
+    <div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  }}
+>
+  <div>
     {showHandle &&
       !post.is_anonymous &&
-      post.user_id && (
-        post.profiles?.is_private ? (
-          <span
-            style={{
-              color: "#39FF88",
-              fontSize: 12,
-              marginBottom: 10,
-              display: "inline-block",
-            }}
-          >
-            Private Profile
-          </span>
-        ) : (
-          <Link
-            href={`/profile/${post.user_id}`}
-            style={{
-              color: "#39FF88",
-              textDecoration: "none",
-              fontSize: 12,
-              marginBottom: 10,
-              display: "inline-block",
-            }}
-          >
-            {post.profiles?.handle
-              ? `@${post.profiles.handle}`
-              : "View Profile"}
-          </Link>
-        )
-      )}
+      post.user_id &&
+      (post.profiles?.is_private ? (
+        <span
+          style={{
+            color: "#39FF88",
+            fontSize: 12,
+            display: "inline-block",
+          }}
+        >
+          Private Profile
+        </span>
+      ) : (
+        <Link
+          href={`/profile/${post.user_id}`}
+          style={{
+            color: "#39FF88",
+            textDecoration: "none",
+            fontSize: 12,
+            display: "inline-block",
+          }}
+        >
+          {post.profiles?.handle
+            ? `@${post.profiles.handle}`
+            : "View Profile"}
+        </Link>
+      ))}
+  </div>
+
+  <PostMenu
+    ownedByUser={ownedByUser}
+    isProfilePage={isProfilePage}
+  />
+</div>
 
     <div
       onClick={() => setExpanded(true)}

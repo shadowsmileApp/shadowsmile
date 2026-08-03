@@ -53,3 +53,116 @@ export async function getPosts(userId?: string) {
       };
   });
 }
+
+export async function sharePost(postId: string) {
+  const link =
+    `${window.location.origin}/post/${postId}`;
+
+  try {
+    await navigator.clipboard.writeText(link);
+    console.log("Link copied");
+  } catch {
+    prompt("Copy this link:", link);
+  }
+}
+
+export async function toggleLike(
+  postId: string,
+  userId: string
+) {
+
+  const {
+    data: existingLike,
+    error: likeCheckError,
+  } = await supabase
+    .from("reactions")
+    .select("id")
+    .eq("post_id", postId)
+    .eq("user_id", userId)
+    .eq("type", "like")
+    .maybeSingle();
+
+  if (likeCheckError) {
+    throw likeCheckError;
+  }
+
+if (existingLike) {
+  const { error } = await supabase
+    .from("reactions")
+    .delete()
+    .eq("id", existingLike.id);
+
+  if (error) {
+    throw error;
+  }
+
+  return;
+}
+
+const { error } = await supabase
+  .from("reactions")
+  .insert({
+    post_id: postId,
+    user_id: userId,
+    type: "like",
+  });
+
+if (error) {
+  throw error;
+}
+}
+
+export async function addComment(
+  postId: string,
+  userId: string,
+  content: string
+) {
+  const { error } = await supabase
+    .from("comments")
+    .insert({
+      post_id: postId,
+      user_id: userId,
+      content,
+    });
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function loadComments(
+  postIds?: string[]
+) {
+  let query = supabase
+    .from("comments")
+    .select(`
+      *,
+      profiles:user_id (
+        id,
+        handle,
+        avatar_url
+      )
+    `)
+    .order("created_at", {
+      ascending: true,
+    });
+
+  if (postIds?.length) {
+    query = query.in("post_id", postIds);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    throw error;
+  }
+
+  return (data || []).map((comment) => ({
+    ...comment,
+    profiles: comment.profiles ?? {
+      id: comment.user_id,
+      handle: "unknown",
+      avatar_url: null,
+    },
+  }));
+}

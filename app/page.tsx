@@ -3,10 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  MessageSquare,
   Command,
-  Heart,
-  Share2,
   Sparkles,
   LogIn,
 } from "lucide-react";
@@ -15,7 +12,14 @@ import { supabase } from "../lib/supabase-browser";
 import { User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import PostCard from "../components/PostCard";
-import { getPosts } from "../lib/posts";
+
+import {
+  getPosts,
+  sharePost,
+  toggleLike,
+  addComment as createComment,
+  loadComments,
+} from "../lib/posts";
 
 /* ================= TYPES ================= */
 
@@ -125,9 +129,9 @@ export default function Page() {
 
   async function loadPosts() {
   try {
-    const data = await getPosts();
+    const posts = await getPosts();
 
-    setPosts(data);
+    setPosts(posts);
   } catch (error) {
     console.error(error);
   }
@@ -156,7 +160,11 @@ useEffect(() => {
   useEffect(() => {
   async function fetchData() {
     await loadPosts();
-    await loadComments();
+
+    const updatedComments =
+      await loadComments();
+
+    setComments(updatedComments);
   }
 
   fetchData();
@@ -189,129 +197,21 @@ useEffect(() => {
     return;
   }
 
-  const { data: existingLike, error: likeCheckError } =
-    await supabase
-      .from("reactions")
-      .select("id")
-      .eq("post_id", postId)
-      .eq("user_id", user.id)
-      .eq("type", "like")
-      .maybeSingle();
-
-console.log(
-  "EXISTING LIKE CHECK:",
-  existingLike,
-  likeCheckError
-);
-
-  if (existingLike) {
-  const { data: deletedLike, error } = await supabase
-    .from("reactions")
-    .delete()
-    .eq("id", existingLike.id)
-    .select();
-
-  console.log(
-    "DELETE RESULT:",
-    deletedLike,
-    error
-  );
-
-  if (error) {
-    console.error(
-      "LIKE DELETE ERROR:",
-      error
+  try {
+    await toggleLike(
+      postId,
+      user.id
     );
-    return;
+
+    await loadPosts();
+
+  } catch (error) {
+    console.error(error);
   }
-
-} else {
-
-  const { error } =
-    await supabase
-      .from("reactions")
-      .insert({
-        post_id: postId,
-        user_id: user.id,
-        type: "like",
-      });
-
-  if (error) {
-    console.error(
-      "LIKE INSERT ERROR:",
-      error
-    );
-    return;
-  }
-}
-
-await loadPosts();
 }
 
   /* ================= LOAD COMMENTS ================= */
 
-async function loadComments() {
-  const { data: commentsData, error } = await supabase
-    .from("comments")
-    .select("*")
-    .order("created_at", {
-      ascending: true,
-    });
-
-  if (error) {
-    console.log(
-      "COMMENT LOAD ERROR:",
-      error
-    );
-
-    alert(
-      JSON.stringify(error, null, 2)
-    );
-
-    return;
-  }
-
-const userIds = [
-  ...new Set(
-    (commentsData || []).map(
-      (comment) => comment.user_id
-    )
-  ),
-];
-
-const {
-  data: profiles,
-  error: profileError,
-} = await supabase
-  .from("profiles")
-  .select(`
-    id,
-    handle,
-    avatar_url
-  `)
-  .in("id", userIds);
-
-if (profileError) {
-  console.error(profileError);
-}
-
-  const profileMap = Object.fromEntries(
-  (profiles || []).map((profile) => [
-    profile.id,
-    profile,
-  ])
-);
-
-const mergedComments = (commentsData || []).map(
-  (comment) => ({
-    ...comment,
-    profiles:
-      profileMap[comment.user_id] || null,
-  })
-);
-
-setComments(mergedComments);
-}
 
   /* ================= COMMENT ================= */
 
@@ -328,25 +228,23 @@ setComments(mergedComments);
 )
   return;
 
-    const { error } =
-  await supabase
-    .from("comments")
-    .insert({
-      post_id: postId,
-      user_id: user.id,
-      content:
-        commentTexts[
-          postId
-        ],
-    });
-
-if (error) {
+    try {
+  await createComment(
+    postId,
+    user.id,
+    commentTexts[postId]
+  );
+} catch (error) {
   console.error(error);
   return;
 }
 
-loadPosts();
-loadComments();
+    await loadPosts();
+
+    const updatedComments =
+      await loadComments();
+
+    setComments(updatedComments);
 
     setCommentTexts((prev) => ({
   ...prev,
@@ -357,16 +255,7 @@ loadComments();
 
   /* ================= SHARE ================= */
 
-  async function sharePost(postId: string) {
-    const link = `${window.location.origin}/post/${postId}`;
-
-    try {
-      await navigator.clipboard.writeText(link);
-      console.log("Link copied");
-    } catch {
-      prompt("Copy this link:", link);
-    }
-  }
+  
 
   /* ================= LOADING ================= */
 
@@ -492,6 +381,7 @@ if (!user) {
   <PostCard
   key={p.id}
   post={p}
+  ownedByUser={user?.id === p.user_id}
   showHandle={true}
   isMobile={isMobile}
   openComments={openComments}

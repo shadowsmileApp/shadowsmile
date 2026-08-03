@@ -8,6 +8,11 @@ import {
 import { supabase } from "../../../lib/supabase-browser";
 import { Heart, MessageSquare } from "lucide-react";
 
+import {
+  toggleLike,
+  addComment as sharedAddComment,
+} from "../../../lib/posts";
+
 type Post = {
   id: string;
   user_id: string | null;
@@ -147,16 +152,23 @@ useEffect(() => {
   /* ================= LIKE POST ================= */
 
   async function likePost() {
-    if (!user) return alert("Login required");
-
-    await supabase.from("reactions").insert({
-      post_id: id,
-      user_id: user.id,
-      type: "like",
-    });
-
-    setLikeCount((prev) => prev + 1);
+  if (!user) {
+    return alert("Login required");
   }
+
+  await toggleLike(
+    id as string,
+    user.id
+  );
+
+  const { data } = await supabase
+    .from("reactions")
+    .select("id")
+    .eq("post_id", id)
+    .eq("type", "like");
+
+  setLikeCount(data?.length || 0);
+}
 
   /* ================= ADD COMMENT ================= */
 

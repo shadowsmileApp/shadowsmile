@@ -9,6 +9,8 @@
 
   import PostCard from "../../../components/PostCard";
 
+  import PostMenu from "../../../components/PostMenu";
+
   import {
     useParams,
     useRouter,
@@ -20,11 +22,22 @@
 import { User }
   from "@supabase/supabase-js";
 
+import { styles } from "./styles";
+
   import {
-    Heart,
-    MessageSquare,
-    Settings,
-  } from "lucide-react";
+  sharePost,
+  toggleLike,
+  addComment,
+  getPosts,
+} from "../../../lib/posts";
+
+import {
+  loadComments,
+} from "./posts";
+
+  import {
+  Settings,
+} from "lucide-react";
 
 type Post = {
   id: string;
@@ -87,18 +100,6 @@ const [bioExpanded, setBioExpanded] =
 const [activeTab, setActiveTab] =
   useState<"media" | "posts" | "likes">("media");
 
-const [editName, setEditName] =
-  useState("");
-
-const [editBio, setEditBio] =
-  useState("");
-
-const [saving, setSaving] =
-  useState(false);
-
-const [avatarFile, setAvatarFile] =
-  useState<File | null>(null);
-
 const [openComments, setOpenComments] =
   useState<string | null>(null);
 
@@ -126,6 +127,18 @@ const [socialStats, setSocialStats] =
     followers: 0,
     following: 0,
   });
+
+const [showFollowers, setShowFollowers] =
+  useState(false);
+
+const [showFollowing, setShowFollowing] =
+  useState(false);
+
+const [followersList, setFollowersList] =
+  useState<any[]>([]);
+
+const [followingList, setFollowingList] =
+  useState<any[]>([]);
 
   /* ================= LOAD USER ================= */
 
@@ -231,15 +244,8 @@ useEffect(() => {
       return;
     }
 
-    setProfile(data);
-
-    setEditName(
-      data?.display_name || ""
-    );
-
-    setEditBio(
-      data?.bio || ""
-    );
+    
+setProfile(data);
 
 /* LOAD FOLLOW STATS */
 
@@ -343,201 +349,78 @@ useEffect(() => {
   profile,
 ]);
 
-/* ================= LIKE ================= */
-
-async function likePost(postId: string) {
-  if (!currentUser) {
-    router.push("/signin");
-    return;
-  }
-
-  const { data: existingLike } =
-    await supabase
-      .from("reactions")
-      .select("id")
-      .eq("post_id", postId)
-      .eq("user_id", currentUser.id)
-      .eq("type", "like")
-      .maybeSingle();
-
-  if (existingLike) {
-    await supabase
-      .from("reactions")
-      .delete()
-      .eq("id", existingLike.id);
-  } else {
-    await supabase
-      .from("reactions")
-      .insert({
-        post_id: postId,
-        user_id: currentUser.id,
-        type: "like",
-      });
-  }
-
-await loadPosts();
-}
-
-/* ================= LOAD COMMENTS ================= */
-
-async function loadComments(postIds: string[]) {
-  if (!id) return;
-
-    const { data: commentsData, error } = await supabase
-      .from("comments")
-      .select(`
-        *,
-        profiles:user_id (
-          id,
-          handle,
-          avatar_url
-        )
-      `)
-      .in("post_id", postIds)
-      .order("created_at", {
-        ascending: true,
-      });
-
-  if (error) {
-    console.error(error);
-    return;
-  }
-
-  setComments(
-  (commentsData || []).map((comment) => ({
-    ...comment,
-    profiles: comment.profiles ?? {
-      id: comment.user_id,
-      handle: "unknown",
-      avatar_url: null,
-    },
-  }))
-);
-}
-
 /* ================= COMMENT ================= */
 
-async function addComment(postId: string) {
+async function handleAddComment(postId: string) {
   if (!currentUser) {
     router.push("/signin");
     return;
   }
 
-  if (!commentTexts[postId]?.trim()) {
+  const content = commentTexts[postId]?.trim();
+
+  if (!content) {
     return;
   }
 
-  const { error } =
-    await supabase
-      .from("comments")
-      .insert({
-        post_id: postId,
-        user_id: currentUser.id,
-        content: commentTexts[postId],
-      });
-
-  if (error) {
-    console.error(error);
-    return;
-  }
+  try {
+  await addComment(
+    postId,
+    currentUser.id,
+    content
+  );
+} catch (error) {
+  console.error(error);
+  return;
+}
 
   setCommentTexts((prev) => ({
-  ...prev,
-  [postId]: "",
-}));
+    ...prev,
+    [postId]: "",
+  }));
 
-await loadComments(
-  posts.map((p) => p.id)
-);
+  const updatedComments =
+  await loadComments(
+    posts.map((p) => p.id)
+  );
+
+setComments(updatedComments);
 
 setOpenComments(null);
 }
 
-
-/* ================= SHARE ================= */
-
-async function sharePost(postId: string) {
-  const link =
-    `${window.location.origin}/post/${postId}`;
-
-  try {
-    await navigator.clipboard.writeText(link);
-    console.log("Link copied");
-  } catch {
-    prompt("Copy this link:", link);
-  }
-}
-
-
 /* ================= LOAD POSTS ================= */
 
-  async function loadPosts() {
-    try {
-      if (!id) return;
+  async function reloadPosts() {
+  try {
+    if (!id) return;
 
-    const { data, error } =
-      await supabase
-        .from("posts")
-        .select("*")
-        .eq("user_id", id)
-        .order("created_at", {
-          ascending: false,
-        });
+    const result = await getPosts(id);
 
-    if (error) {
-      console.error(error);
-      return;
-    }
+    setPosts(result);
 
-      const postsData = data || [];
+const updatedComments =
+  await loadComments(
+    result.map((p) => p.id)
+  );
 
-const postIds =
-  postsData.map((p) => p.id);
+setComments(updatedComments);
 
-const { data: reactionsData } =
-  await supabase
-    .from("reactions")
-    .select("post_id,type")
-    .in("post_id", postIds);
+setStats({
+  postCount: result.length,
+  likesReceived: result.reduce(
+    (total, post) => total + (post.like_count || 0),
+    0
+  ),
+});
 
-/* Format posts with shared data (future lib/posts.ts) */
-
-const likeCounts: Record<string, number> = {};
-
-for (const reaction of reactionsData || []) {
-  if (reaction.type !== "like") continue;
-
-  likeCounts[reaction.post_id] =
-    (likeCounts[reaction.post_id] || 0) + 1;
+  } catch (error) {
+    console.error(error);
+  }
 }
 
-const postsWithLikes =
-  postsData.map((post) => ({
-    ...post,
-    like_count: likeCounts[post.id] || 0,
-  }));
-
-setPosts(postsWithLikes);
-
-      await loadComments(postIds);
-
-      const likesReceived =
-        reactionsData?.filter(
-          (r) => r.type === "like"
-        ).length || 0;
-
-      setStats({
-        postCount: postsData.length,
-        likesReceived,
-      });
-
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
 useEffect(() => {
-   void loadPosts();
+   void reloadPosts();
   }, [id]);
 
 /* ================= FOLLOW SYSTEM ================= */
@@ -1295,11 +1178,20 @@ type="button"
       {mediaPosts.map((p) => (
         <div
           key={p.id}
-          style={styles.mediaTile}
+          style={{
+            ...styles.mediaTile,
+            position: "relative",
+          }}
           onClick={() =>
             router.push(`/post/${p.id}`)
           }
-        >
+         >
+
+           <PostMenu
+             ownedByUser={currentUser?.id === p.user_id}
+             isProfilePage
+           />
+
           {p.media_type === "video" ? (
             <video
               src={p.media_url || ""}
@@ -1352,6 +1244,8 @@ type="button"
         <PostCard
           key={p.id}
           post={p}
+          ownedByUser={currentUser?.id === p.user_id}
+          isProfilePage={true}
           showHandle={false}
           isMobile={isMobile}
           openComments={openComments}
@@ -1359,8 +1253,19 @@ type="button"
           commentTexts={commentTexts}
           comments={comments}
           setCommentTexts={setCommentTexts}
-          likePost={likePost}
-          addComment={addComment}
+
+likePost={async (postId) => {
+  alert("Profile page likePost");
+
+  await toggleLike(
+    postId,
+    currentUser.id
+  );
+
+  await reloadPosts();
+}}
+
+          addComment={handleAddComment}
           sharePost={sharePost}
         />
       ))
@@ -1377,411 +1282,3 @@ type="button"
    </main>
  );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  page: {
-  minHeight: "100vh",
-  background:
-    "linear-gradient(180deg,#0A0A0F,#0E0E14)",
-  color: "#EAEAF0",
-
-  paddingTop: 20,
-  paddingLeft: 20,
-  paddingRight: 20,
-  paddingBottom: 120,
-
-  fontFamily: "system-ui",
-},
-
-  loading: {
-    minHeight: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "#0A0A0F",
-    color: "#fff",
-  },
-
-  header: {
-  display: "flex",
-  justifyContent: "flex-end",
-  marginBottom: 20,
-},
-
-  settingsBtn: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    background: "linear-gradient(135deg,#7B2FFF,#39FF88)",
-    border: "none",
-    color: "#fff",
-    padding: "10px 16px",
-    borderRadius: 12,
-    cursor: "pointer",
-    fontWeight: 700,
-  },
-
-  profileCard: {
-  marginBottom: 24,
-  background: "#111",
-  border: "1px solid #222",
-  borderRadius: 28,
-  padding: 28,
-},
-
-profileGrid: {
-  display: "grid",
-  gridTemplateColumns: "190px 1fr",
-  gap: 28,
-  alignItems: "start",
-},
-
-avatarColumn: {
-  display: "flex",
-  flexDirection: "column",
-  gap: 18,
-  alignItems: "center",
-},
-
-avatarLarge: {
-  position: "relative",
-  overflow: "hidden",
-  width: 170,
-  height: 170,
-  borderRadius: 24,
-  background:
-    "linear-gradient(135deg,#7B2FFF,#39FF88)",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  fontSize: 48,
-  fontWeight: 900,
-  border: "1px solid rgba(123,47,255,.25)",
-},
-
-followBtn: {
-  width: "100%",
-  background:
-    "linear-gradient(135deg,#7B2FFF,#9B5DFF)",
-  border: "none",
-  color: "#fff",
-  padding: "14px 18px",
-  borderRadius: 16,
-  cursor: "pointer",
-  fontWeight: 800,
-  fontSize: 16,
-},
-
-messageBtn: {
-  width: "100%",
-  background: "#15151A",
-  border: "1px solid #333",
-  color: "#fff",
-  padding: "14px 18px",
-  borderRadius: 16,
-  cursor: "pointer",
-  fontWeight: 700,
-},
-
-profileContent: {
-  display: "flex",
-  flexDirection: "column",
-  gap: 20,
-},
-
-identityRow: {
-  display: "flex",
-  alignItems: "center",
-  gap: 12,
-  flexWrap: "wrap",
-},
-
-founderBadge: {
-  padding: "8px 14px",
-  borderRadius: 14,
-  background: "rgba(123,47,255,.12)",
-  border: "1px solid rgba(123,47,255,.3)",
-  color: "#B88CFF",
-  fontWeight: 700,
-  fontSize: 13,
-},
-
-counterBar: {
-  display: "grid",
-  gridTemplateColumns: "repeat(3,1fr)",
-  gap: 12,
-},
-
-counterCard: {
-  background: "#15151A",
-  border: "1px solid #25252D",
-  borderRadius: 18,
-  padding: "18px 12px",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  cursor: "pointer",
-},
-
-counterNumber: {
-  fontSize: 30,
-  fontWeight: 800,
-  lineHeight: 1,
-},
-
-counterLabel: {
-  fontSize: 14,
-  color: "#888",
-  marginTop: 4,
-},
-
-bioCard: {
-  background: "#15151A",
-  border: "1px solid #25252D",
-  borderRadius: 20,
-  padding: 18,
-},
-
-avatarImage: {
-  objectFit: "cover",
-},
-
-  handle: {
-    fontSize: 18,
-    fontWeight: 600,
-    color: "#888",
-  },
-
-displayName: {
-  fontSize: 28,
-  fontWeight: 800,
-  marginBottom: 6,
-},
-
-bio: {
-  color: "#C9C9D1",
-  lineHeight: 1.7,
-  margin: 0,
-  overflowWrap: "anywhere",
-},
-
-bioExpandBtn: {
-  background: "transparent",
-  border: "none",
-  color: "#7B2FFF",
-  fontWeight: 700,
-  cursor: "pointer",
-  marginTop: 8,
-  padding: 0,
-},
-
-  memberSince: {
-  color: "#888",
-  marginTop: 8,
-},
-
-editButton: {
-  marginTop: 18,
-  background:
-    "linear-gradient(135deg,#7B2FFF,#39FF88)",
-  border: "none",
-  color: "#0A0A0F",
-  padding: "12px 18px",
-  borderRadius: 14,
-  fontWeight: 800,
-  cursor: "pointer",
-},
-
-editBox: {
-  marginTop: 24,
-  display: "flex",
-  flexDirection: "column",
-  gap: 12,
-},
-
-input: {
-  background: "#111",
-  border: "1px solid #222",
-  borderRadius: 14,
-  padding: 14,
-  color: "#fff",
-  fontSize: 16,
-},
-
-textarea: {
-  background: "#111",
-  border: "1px solid #222",
-  borderRadius: 14,
-  padding: 14,
-  color: "#fff",
-  minHeight: 120,
-  resize: "none" as const,
-  fontSize: 16,
-},
-
-editActions: {
-  display: "flex",
-  gap: 12,
-},
-
-cancelButton: {
-  flex: 1,
-  background: "#222",
-  border: "none",
-  color: "#fff",
-  padding: 14,
-  borderRadius: 14,
-  cursor: "pointer",
-},
-
-saveButton: {
-  flex: 1,
-  background:
-    "linear-gradient(135deg,#7B2FFF,#39FF88)",
-  border: "none",
-  color: "#0A0A0F",
-  padding: 14,
-  borderRadius: 14,
-  fontWeight: 800,
-  cursor: "pointer",
-},
-
-  feed: {
-    marginTop: 20,
-  },
-
-  sectionTitle: {
-    marginBottom: 16,
-  },
-
-  emptyText: {
-    color: "#777",
-  },
-
-  card: {
-    background: "#111",
-    border: "1px solid #222",
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 16,
-  },
-
-  actions: {
-    display: "flex",
-    gap: 10,
-    marginTop: 14,
-  },
-
-mobileMetaRow: {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginTop: 12,
-  paddingTop: 12,
-  borderTop: "1px solid #25252D",
-},
-
-mobileMetaItem: {
-  fontSize: 12,
-  color: "#888",
-},
-
-mobileSettingsBtn: {
-  background: "transparent",
-  border: "none",
-  color: "#999",
-  cursor: "pointer",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-},
-
-mobileActionButtons: {
-  display: "flex",
-  flexDirection: "column",
-  gap: 12,
-  marginTop: 16,
-},
-
-  actionBtn: {
-    background: "#1A1A1A",
-    border: "1px solid #333",
-    color: "#fff",
-    borderRadius: 10,
-    padding: 8,
-  },
-
-  uploadLabel: {
-    background:
-      "linear-gradient(135deg,#7B2FFF,#39FF88)",
-    color: "#0A0A0F",
-    padding: 14,
-    borderRadius: 14,
-    fontWeight: 800,
-    textAlign: "center",
-    cursor: "pointer",
-  },
-
-profileTabs: {
-  display: "flex",
-  gap: 12,
-  marginTop: 24,
-  marginBottom: 24,
-},
-
-profileTab: {
-  flex: 1,
-  background: "#15151A",
-  border: "1px solid #25252D",
-  color: "#999",
-  borderRadius: 14,
-  padding: "14px 0",
-  fontWeight: 700,
-  cursor: "pointer",
-  transition: "0.2s",
-},
-
-profileTabActive: {
-  background: "linear-gradient(135deg,#7B2FFF,#9B5DFF)",
-  border: "none",
-  color: "#fff",
-},
-
-mediaGrid: {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(220px,1fr))",
-  gap: 16,
-},
-
-mediaTile: {
-  position: "relative",
-  aspectRatio: "1 / 1",
-  borderRadius: 18,
-  overflow: "hidden",
-  cursor: "pointer",
-  background: "#15151A",
-  border: "1px solid #25252D",
-},
-
-mediaImage: {
-  objectFit: "cover",
-},
-
-mediaOverlay: {
-  position: "absolute",
-  inset: 0,
-  background: "rgba(0,0,0,.25)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  color: "#fff",
-  fontWeight: 700,
-  opacity: 0,
-  transition: "opacity .2s",
-},
-
-hiddenInput: {
-  display: "none",
-},
-
-};
