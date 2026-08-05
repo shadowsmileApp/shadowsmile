@@ -234,17 +234,22 @@ const trimmedHandle =
         } = await supabase.auth.signUp({
             email,
             password,
-            options: {
+            
+options: {
+  emailRedirectTo:
+    `${window.location.origin}/auth/callback`,
+
   data: {
-  handle: handle.trim().toLowerCase(),
+    handle: handle.trim().toLowerCase(),
 
-  first_name: firstName.trim(),
+    first_name: firstName.trim(),
 
-  last_name: lastName.trim(),
+    last_name: lastName.trim(),
 
-  date_of_birth: birthDate
-      .toISOString()
-      .split("T")[0],
+    date_of_birth:
+      birthDate
+        .toISOString()
+        .split("T")[0],
 
     phone_number:
       phoneNumber.trim() || null,
