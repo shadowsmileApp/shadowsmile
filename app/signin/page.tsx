@@ -2,12 +2,13 @@
 
 import React, { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase-browser";
+import { getEmailFromLogin } from "../../lib/auth";
 import { useRouter } from "next/navigation";
 
 export default function SignInPage() {
   const router = useRouter();
 
-  const [email, setEmail] = useState("");
+  const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -64,11 +65,30 @@ export default function SignInPage() {
   setErrorMessage("");
   setSuccessMessage("");
 
-  const { data, error } =
-        await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+const {
+  email,
+  error: lookupError,
+} = await getEmailFromLogin(login);
+
+if (lookupError) {
+  setErrorMessage(
+    "Unable to verify username."
+  );
+  return;
+}
+
+if (!email) {
+  setErrorMessage(
+    "Username or email not found."
+  );
+  return;
+}
+
+const { data, error } =
+  await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
       if (error) {
   setErrorMessage(error.message);
@@ -138,11 +158,11 @@ export default function SignInPage() {
         <input
           id="email"
           name="email"
-          autoComplete="email"
-          placeholder="Email Address"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          autoComplete="username"
+          placeholder="Email or Username"
+          type="text"
+          value={login}
+          onChange={(e) => setLogin(e.target.value)}
           className="w-full rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-base text-white placeholder:text-gray-500 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 mb-3"
         />
 
@@ -174,18 +194,33 @@ export default function SignInPage() {
               setErrorMessage("");
               setSuccessMessage("");
 
-              if (!email) {
-                 setErrorMessage("Enter your email address first.");
-                 return;
-                }
+              const {
+  email,
+  error: lookupError,
+} = await getEmailFromLogin(login);
 
-              const { error } =
-                await supabase.auth.resetPasswordForEmail(
-                  email,
-                  {
-                    redirectTo: `${window.location.origin}/reset-password`,
-                  }
-                );
+if (lookupError) {
+  setErrorMessage(
+    "Unable to verify username."
+  );
+  return;
+}
+
+if (!email) {
+  setErrorMessage(
+    "Enter your email or username first."
+  );
+  return;
+}
+
+const { error } =
+  await supabase.auth.resetPasswordForEmail(
+    email,
+    {
+      redirectTo:
+        `${window.location.origin}/reset-password`,
+    }
+  );
 
               if (error) {
                 setErrorMessage(error.message);
@@ -217,7 +252,7 @@ export default function SignInPage() {
           type="submit"
           disabled={
             loading ||
-            !email ||
+            !login ||
             !password
           }
           className="w-full rounded-xl bg-white py-3.5 text-base font-bold text-black transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"

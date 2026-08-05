@@ -261,6 +261,8 @@ const trimmedHandle =
   const profilePayload = {
   id: data.user.id,
 
+  email: data.user.email,
+
   handle: handle.trim().toLowerCase(),
 
   display_name:
