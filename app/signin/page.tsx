@@ -3,10 +3,18 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase-browser";
 import { getEmailFromLogin } from "../../lib/auth";
-import { useRouter } from "next/navigation";
+import {
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
 
 export default function SignInPage() {
   const router = useRouter();
+
+const searchParams = useSearchParams();
+
+const signupSuccess =
+  searchParams.get("signup");
 
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
@@ -247,6 +255,12 @@ const { error } =
            ✓ {successMessage}
          </div>
        )}
+
+{signupSuccess === "success" && (
+  <div className="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
+    ✓ Account created successfully! Please check your email for the confirmation link. After confirming your email, return here and sign in.
+  </div>
+)}
 
         <button
           type="submit"

@@ -331,7 +331,7 @@ options: {
   return;
 }
 
-        router.push("/onboarding");
+        router.push("/signin?signup=success");
 return;
 }
 

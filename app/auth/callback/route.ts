@@ -3,40 +3,31 @@ import { createClient } from "../../../lib/supabase-server";
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
+
+console.log("CALLBACK URL:", request.url);
+
+console.log(
+  "ALL SEARCH PARAMS:",
+  [...requestUrl.searchParams.entries()]
+);
+
   const code = requestUrl.searchParams.get("code");
 
   if (code) {
     const supabase = await createClient();
 
-    await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } =
+  await supabase.auth.exchangeCodeForSession(code);
 
-    await supabase.auth.getSession();
+console.log("EXCHANGE ERROR:", error);
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+console.log("SESSION:", data.session);
 
-    if (!user) {
-      return NextResponse.redirect(
-        new URL("/signin", requestUrl.origin)
-      );
-    }
+console.log("USER:", data.user);
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("onboarding_complete")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    if (profile?.onboarding_complete) {
-      return NextResponse.redirect(
-        new URL("/", requestUrl.origin)
-      );
-    }
-
-    return NextResponse.redirect(
-      new URL("/onboarding", requestUrl.origin)
-    );
+return NextResponse.redirect(
+  new URL("/signin", requestUrl.origin)
+);
   }
 
   return NextResponse.redirect(

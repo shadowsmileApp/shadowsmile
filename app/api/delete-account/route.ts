@@ -32,6 +32,8 @@ const { error: reactionsError } =
     .eq("user_id", userId);
 
 if (reactionsError) {
+  console.error("REACTIONS ERROR:", reactionsError);
+
   return NextResponse.json(
     {
       success: false,
@@ -50,6 +52,8 @@ const { error: commentsError } =
     .eq("user_id", userId);
 
 if (commentsError) {
+  console.error("COMMENTS ERROR:", commentsError);
+
   return NextResponse.json(
     {
       success: false,

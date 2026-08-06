@@ -343,7 +343,9 @@ onClick={() => router.push("/settings/privacy")}
   </button>
 
   <button
-    onClick={() => router.push("/settings/download-data")}
+    onClick={() =>
+      alert("Download My Data is coming soon.")
+    }
     style={{
       width: "100%",
       background: "transparent",
