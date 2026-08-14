@@ -263,76 +263,8 @@ options: {
 }
 
         if (data.user) {
-  const profilePayload = {
-  id: data.user.id,
-
-  email: data.user.email,
-
-  handle: handle.trim().toLowerCase(),
-
-  display_name:
-    `${firstName.trim()} ${lastName.trim()}`,
-
-  first_name:
-    firstName.trim(),
-
-  last_name:
-    lastName.trim(),
-
-  date_of_birth:
-    birthDate
-      .toISOString()
-      .split("T")[0],
-
-  phone_number:
-    phoneNumber.trim() || null,
-
-  bio: "",
-
-  role: "user",
-};
-
-  // First attempt
-  let { error: profileError } =
-    await supabase
-      .from("profiles")
-      .update(profilePayload)
-.eq("id", data.user.id);
-
-  // Quiet repair attempt
-  if (profileError) {
-    console.warn(
-      "Profile update failed, retrying...",
-      profileError
-    );
-
-    // Small pause
-    await new Promise((resolve) =>
-      setTimeout(resolve, 1000)
-    );
-
-    // Second attempt
-    const retry =
-      await supabase
-        .from("profiles")
-        .update(profilePayload)
-.eq("id", data.user.id);
-
-    profileError = retry.error;
-  }
-
-  // Final failure
-  if (profileError) {
-  console.error(profileError);
-
-  setErrorMessage(
-    "Your account was created, but your profile couldn't be completed automatically. Please sign in and try again."
-  );
+  router.push("/signin?signup=success");
   return;
-}
-
-        router.push("/signin?signup=success");
-return;
 }
 
       } else {
@@ -420,32 +352,50 @@ if (profile?.onboarding_complete) {
         {/* Handle for signup */}
         {mode === "signup" && (
   <>
-    <input
-      placeholder="First Name"
-      value={firstName}
-      onChange={(e) =>
-        setFirstName(e.target.value)
-      }
-      className="w-full p-3 rounded-xl bg-white/10 border border-white/10 text-white mb-3 outline-none"
-    />
+    <div className="mb-3">
+  <label className="block text-sm text-gray-300 mb-1">
+    First Name <span className="text-red-500">*</span>
+  </label>
 
-    <input
-      placeholder="Last Name"
-      value={lastName}
-      onChange={(e) =>
-        setLastName(e.target.value)
-      }
-      className="w-full p-3 rounded-xl bg-white/10 border border-white/10 text-white mb-3 outline-none"
-    />
+  <input
+    placeholder="First Name"
+    value={firstName}
+    onChange={(e) =>
+      setFirstName(e.target.value)
+    }
+    className="w-full p-3 rounded-xl bg-white/10 border border-white/10 text-white outline-none"
+  />
+</div>
 
-    <input
-  placeholder="Date of Birth (MM/DD/YYYY)"
-  value={dateOfBirth}
-  onChange={(e) =>
-    setDateOfBirth(e.target.value)
-  }
-  className="w-full p-3 rounded-xl bg-white/10 border border-white/10 text-white mb-3 outline-none"
-/>
+    <div className="mb-3">
+  <label className="block text-sm text-gray-300 mb-1">
+    Last Name <span className="text-red-500">*</span>
+  </label>
+
+  <input
+    placeholder="Last Name"
+    value={lastName}
+    onChange={(e) =>
+      setLastName(e.target.value)
+    }
+    className="w-full p-3 rounded-xl bg-white/10 border border-white/10 text-white outline-none"
+  />
+</div>
+
+    <div className="mb-3">
+  <label className="block text-sm text-gray-300 mb-1">
+    Date of Birth <span className="text-red-500">*</span>
+  </label>
+
+  <input
+    placeholder="Date of Birth (MM/DD/YYYY)"
+    value={dateOfBirth}
+    onChange={(e) =>
+      setDateOfBirth(e.target.value)
+    }
+    className="w-full p-3 rounded-xl bg-white/10 border border-white/10 text-white outline-none"
+  />
+</div>
 
     <input
       placeholder="Phone Number (optional)"
@@ -456,17 +406,23 @@ if (profile?.onboarding_complete) {
       className="w-full p-3 rounded-xl bg-white/10 border border-white/10 text-white mb-3 outline-none"
     />
 
-    <input
-      id="handle"
-      name="handle"
-      autoComplete="username"
-      placeholder="Choose a username"
-      value={handle}
-      onChange={(e) =>
-        setHandle(e.target.value)
-      }
-      className="w-full p-3 rounded-xl bg-white/10 border border-white/10 text-white mb-3 outline-none"
-    />
+    <div className="mb-3">
+  <label className="block text-sm text-gray-300 mb-1">
+    Username <span className="text-red-500">*</span>
+  </label>
+
+  <input
+    id="handle"
+    name="handle"
+    autoComplete="username"
+    placeholder="Choose a username"
+    value={handle}
+    onChange={(e) =>
+      setHandle(e.target.value)
+    }
+    className="w-full p-3 rounded-xl bg-white/10 border border-white/10 text-white outline-none"
+  />
+</div>
   </>
 )}
 
@@ -487,7 +443,11 @@ if (profile?.onboarding_complete) {
         />
 
         {/* Password */}
-        <div className="relative mb-2">
+        <div className="relative mb-3">
+
+  <label className="block text-sm text-gray-300 mb-1">
+    Password <span className="text-red-500">*</span>
+  </label>
 
   <input
     id="password"
@@ -507,7 +467,7 @@ if (profile?.onboarding_complete) {
     onClick={() =>
       setShowPassword(!showPassword)
     }
-    className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-emerald-400 hover:text-emerald-300"
+    className="absolute right-3 top-[calc(50%+12px)] -translate-y-1/2 text-sm text-emerald-400 hover:text-emerald-300"
   >
     {showPassword ? "Hide" : "Show"}
   </button>
@@ -518,37 +478,41 @@ if (profile?.onboarding_complete) {
 
   <div className="relative mb-3">
 
-    <input
-      placeholder="Confirm Password"
-      type={
-        showConfirmPassword
-          ? "text"
-          : "password"
-      }
-      value={confirmPassword}
-      onChange={(e) =>
-        setConfirmPassword(
-          e.target.value
-        )
-      }
-      className="w-full p-3 pr-16 rounded-xl bg-white/10 border border-white/10 text-white outline-none"
-    />
+  <label className="block text-sm text-gray-300 mb-1">
+    Confirm Password <span className="text-red-500">*</span>
+  </label>
 
-    <button
-      type="button"
-      onClick={() =>
-        setShowConfirmPassword(
-          !showConfirmPassword
-        )
-      }
-      className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-emerald-400 hover:text-emerald-300"
-    >
-      {showConfirmPassword
-        ? "Hide"
-        : "Show"}
-    </button>
+  <input
+    placeholder="Confirm Password"
+    type={
+      showConfirmPassword
+        ? "text"
+        : "password"
+    }
+    value={confirmPassword}
+    onChange={(e) =>
+      setConfirmPassword(
+        e.target.value
+      )
+    }
+    className="w-full p-3 pr-16 rounded-xl bg-white/10 border border-white/10 text-white outline-none"
+  />
 
-  </div>
+  <button
+    type="button"
+    onClick={() =>
+      setShowConfirmPassword(
+        !showConfirmPassword
+      )
+    }
+    className="absolute right-3 top-[calc(50%+12px)] -translate-y-1/2 text-sm text-emerald-400 hover:text-emerald-300"
+  >
+    {showConfirmPassword
+      ? "Hide"
+      : "Show"}
+  </button>
+
+</div>
 
 )}
 

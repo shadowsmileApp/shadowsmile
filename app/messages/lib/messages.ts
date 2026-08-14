@@ -94,7 +94,7 @@ export async function getConversations(
     await supabase
       .from("profiles")
       .select(
-        "id, display_name, handle, avatar_url"
+        "id, first_name, last_name, handle, avatar_url"
       )
       .in(
         "id",
@@ -113,9 +113,10 @@ export async function getConversations(
       (profiles || []).map(
         (profile) => ({
           id: profile.id,
-          display_name:
-            profile.display_name ||
-            "Unknown User",
+          first_name:
+            profile.first_name || "",
+          last_name:
+            profile.last_name || "",
           handle:
             profile.handle || "",
           avatar_url:

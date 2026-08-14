@@ -40,6 +40,8 @@ type PostCardProps = {
   addComment: (postId: string) => void;
 
   sharePost: (postId: string) => void;
+  
+  onPostDeleted: (postId: string) => void;
 };
 export default function PostCard({
   post,
@@ -55,11 +57,14 @@ export default function PostCard({
   likePost,
   addComment,
   sharePost,
+  onPostDeleted,
 }: PostCardProps) {
 
   const router = useRouter();
 
   const [expanded, setExpanded] = useState(false);
+
+  const [mediaIndex, setMediaIndex] = useState(0);
 
   const [liked, setLiked] = useState(
     post.liked_by_user || false
@@ -128,9 +133,11 @@ export default function PostCard({
   </div>
 
   <PostMenu
-    ownedByUser={ownedByUser}
-    isProfilePage={isProfilePage}
-  />
+  postId={post.id}
+  ownedByUser={ownedByUser}
+  isProfilePage={isProfilePage}
+  onPostDeleted={onPostDeleted}
+/>
 </div>
 
     <div
@@ -159,33 +166,216 @@ export default function PostCard({
         <p>{post.content}</p>
       )}
 
-      {post.media_url && post.media_type === "image" && (
-  <img
-    src={post.media_url}
-    alt="Post"
+      {post.post_media?.length > 0 ? (
+  <div
     style={{
+      position: "relative",
       width: "100%",
       marginTop: 14,
+      overflow: "hidden",
       borderRadius: 14,
-      maxHeight: 450,
-      objectFit: "cover",
+      background: "#000",
     }}
-  />
-)}
+  >
+    <div
+      style={{
+        display: "flex",
+        width: "100%",
+        transform: `translateX(-${mediaIndex * 100}%)`,
+        transition: "transform 180ms ease",
+      }}
+    >
+      {post.post_media
+        .slice()
+        .sort(
+          (a: any, b: any) =>
+            a.media_order - b.media_order
+        )
+        .map((media: any) => (
+          <div
+            key={media.id}
+            style={{
+              flex: "0 0 100%",
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "#000",
+            }}
+          >
+            {media.media_type === "video" ? (
+              <video
+                src={media.media_url}
+                controls
+                playsInline
+                preload="metadata"
+                style={{
+                  display: "block",
+                  width: "100%",
+                  maxHeight: 600,
+                  objectFit: "contain",
+                  background: "#000",
+                }}
+              />
+            ) : (
+              <img
+                src={media.media_url}
+                alt="Post media"
+                style={{
+                  display: "block",
+                  width: "100%",
+                  maxHeight: 600,
+                  objectFit: "contain",
+                  background: "#000",
+                }}
+              />
+            )}
+          </div>
+        ))}
+    </div>
 
-{post.media_url && post.media_type === "video" && (
-  <video
-    src={post.media_url}
-    controls
-    playsInline
-    style={{
-      width: "100%",
-      marginTop: 14,
-      borderRadius: 14,
-      maxHeight: 450,
-      objectFit: "cover",
-    }}
-  />
+    {post.post_media.length > 1 && (
+      <>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+
+            setMediaIndex((current) =>
+              current === 0
+                ? post.post_media.length - 1
+                : current - 1
+            );
+          }}
+          style={{
+            position: "absolute",
+            left: 10,
+            top: "50%",
+            transform: "translateY(-50%)",
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            border: "none",
+            background: "rgba(0,0,0,0.65)",
+            color: "#fff",
+            fontSize: 24,
+            cursor: "pointer",
+            zIndex: 2,
+          }}
+        >
+          ‹
+        </button>
+
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+
+            setMediaIndex((current) =>
+              current === post.post_media.length - 1
+                ? 0
+                : current + 1
+            );
+          }}
+          style={{
+            position: "absolute",
+            right: 10,
+            top: "50%",
+            transform: "translateY(-50%)",
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            border: "none",
+            background: "rgba(0,0,0,0.65)",
+            color: "#fff",
+            fontSize: 24,
+            cursor: "pointer",
+            zIndex: 2,
+          }}
+        >
+          ›
+        </button>
+
+        <div
+          style={{
+            position: "absolute",
+            bottom: 10,
+            left: "50%",
+            transform: "translateX(-50%)",
+            display: "flex",
+            gap: 6,
+            zIndex: 2,
+          }}
+        >
+          {post.post_media.map(
+            (media: any, index: number) => (
+              <button
+                key={media.id}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMediaIndex(index);
+                }}
+                style={{
+                  width: 7,
+                  height: 7,
+                  padding: 0,
+                  borderRadius: "50%",
+                  border: "none",
+                  background:
+                    index === mediaIndex
+                      ? "#fff"
+                      : "rgba(255,255,255,0.45)",
+                  cursor: "pointer",
+                }}
+              />
+            )
+          )}
+        </div>
+      </>
+    )}
+  </div>
+) : (
+  post.media_url &&
+  post.media_type && (
+    <div
+      style={{
+        width: "100%",
+        marginTop: 14,
+        overflow: "hidden",
+        borderRadius: 14,
+        background: "#000",
+      }}
+    >
+      {post.media_type === "video" ? (
+        <video
+          src={post.media_url}
+          controls
+          playsInline
+          preload="metadata"
+          style={{
+            display: "block",
+            width: "100%",
+            maxHeight: 600,
+            objectFit: "contain",
+            background: "#000",
+          }}
+        />
+      ) : (
+        <img
+          src={post.media_url}
+          alt="Post media"
+          style={{
+            display: "block",
+            width: "100%",
+            maxHeight: 600,
+            objectFit: "contain",
+            background: "#000",
+          }}
+        />
+      )}
+    </div>
+  )
 )}
     </div>
 
@@ -314,38 +504,34 @@ export default function PostCard({
   >
     <div
       style={{
-        width: "90%",
-        maxWidth: 900,
-        height: "90vh",
-        background: "#111",
-        borderRadius: 20,
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-      }}
+  width: "100%",
+  height: "100%",
+  background: "#000",
+  display: "flex",
+  flexDirection: "column",
+  overflow: "hidden",
+}}
     >
 
-<div
+<button
+  onClick={() => setExpanded(false)}
   style={{
-    display: "flex",
-    justifyContent: "flex-end",
-    padding: 16,
-    borderBottom: "1px solid #222",
+    position: "absolute",
+    top: 18,
+    right: 18,
+    width: 48,
+    height: 48,
+    borderRadius: "50%",
+    background: "rgba(0,0,0,0.65)",
+    border: "none",
+    color: "#fff",
+    fontSize: 28,
+    cursor: "pointer",
+    zIndex: 10,
   }}
 >
-  <button
-    onClick={() => setExpanded(false)}
-    style={{
-      background: "transparent",
-      border: "none",
-      color: "#fff",
-      fontSize: 28,
-      cursor: "pointer",
-    }}
-  >
-    ✕
-  </button>
-</div>
+  ✕
+</button>
 
 <div
   style={{
@@ -371,33 +557,174 @@ export default function PostCard({
     <p>{post.content}</p>
   )}
 
-  {post.media_url && post.media_type === "image" && (
-  <img
-    src={post.media_url}
-    alt="Post"
+  {(post.post_media?.length > 0 ||
+  (post.media_url && post.media_type)) && (
+  <div
     style={{
-      width: "100%",
+      position: "relative",
       marginTop: 14,
+      width: "100%",
+      height: "70vh",
+      overflow: "hidden",
       borderRadius: 14,
-      maxHeight: 600,
-      objectFit: "contain",
+      background: "#000",
     }}
-  />
-)}
+  >
+    <div
+      style={{
+        display: "flex",
+        width: "100%",
+        height: "100%",
+        transform: `translateX(-${mediaIndex * 100}%)`,
+        transition: "transform 180ms ease",
+      }}
+    >
+      {post.post_media
+        .slice()
+        .sort(
+          (a: any, b: any) =>
+            a.media_order - b.media_order
+        )
+        .map((media: any) => (
+          <div
+            key={media.id}
+            style={{
+              flex: "0 0 100%",
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "#000",
+            }}
+          >
+            {media.media_type === "video" ? (
+              <video
+                src={media.media_url}
+                controls
+                playsInline
+                preload="metadata"
+                style={{
+                  display: "block",
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                  background: "#000",
+                }}
+              />
+            ) : (
+              <img
+                src={media.media_url}
+                alt="Post media"
+                style={{
+                  display: "block",
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                  background: "#000",
+                }}
+              />
+            )}
+          </div>
+        ))}
+    </div>
 
-{post.media_url && post.media_type === "video" && (
-  <video
-    src={post.media_url}
-    controls
-    playsInline
-    style={{
-      width: "100%",
-      marginTop: 14,
-      borderRadius: 14,
-      maxHeight: 600,
-      objectFit: "contain",
-    }}
-  />
+    {post.post_media.length > 1 && (
+      <>
+        <button
+          type="button"
+          onClick={() => {
+            setMediaIndex((current) =>
+              current === 0
+                ? post.post_media.length - 1
+                : current - 1
+            );
+          }}
+          style={{
+            position: "absolute",
+            left: 14,
+            top: "50%",
+            transform: "translateY(-50%)",
+            width: 46,
+            height: 46,
+            borderRadius: "50%",
+            border: "none",
+            background: "rgba(0,0,0,0.7)",
+            color: "#fff",
+            fontSize: 30,
+            cursor: "pointer",
+            zIndex: 2,
+          }}
+        >
+          ‹
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setMediaIndex((current) =>
+              current === post.post_media.length - 1
+                ? 0
+                : current + 1
+            );
+          }}
+          style={{
+            position: "absolute",
+            right: 14,
+            top: "50%",
+            transform: "translateY(-50%)",
+            width: 46,
+            height: 46,
+            borderRadius: "50%",
+            border: "none",
+            background: "rgba(0,0,0,0.7)",
+            color: "#fff",
+            fontSize: 30,
+            cursor: "pointer",
+            zIndex: 2,
+          }}
+        >
+          ›
+        </button>
+
+        <div
+          style={{
+            position: "absolute",
+            bottom: 14,
+            left: "50%",
+            transform: "translateX(-50%)",
+            display: "flex",
+            gap: 7,
+            zIndex: 2,
+          }}
+        >
+          {post.post_media.map(
+            (media: any, index: number) => (
+              <button
+                key={media.id}
+                type="button"
+                onClick={() => {
+                  setMediaIndex(index);
+                }}
+                style={{
+                  width: 8,
+                  height: 8,
+                  padding: 0,
+                  borderRadius: "50%",
+                  border: "none",
+                  background:
+                    index === mediaIndex
+                      ? "#fff"
+                      : "rgba(255,255,255,0.45)",
+                  cursor: "pointer",
+                }}
+              />
+            )
+          )}
+        </div>
+      </>
+    )}
+  </div>
 )}
 </div>
 

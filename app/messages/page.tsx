@@ -37,7 +37,8 @@ const [conversations, setConversations] =
 useState<
 {
   id: string;
-  display_name: string;
+  first_name: string;
+  last_name: string;
   handle: string;
   avatar_url: string | null;
 }[]
@@ -95,10 +96,10 @@ useEffect(() => {
       await supabase
         .from("profiles")
         .select(
-          "id, display_name, handle, avatar_url"
+          "id, first_name, last_name, handle, avatar_url"
         )
         .or(
-          `display_name.ilike.%${search}%,handle.ilike.%${search}%`
+          `first_name.ilike.%${search}%,last_name.ilike.%${search}%,handle.ilike.%${search}%`
         )
         .limit(10);
 
@@ -663,7 +664,7 @@ useEffect(() => {
   }
 
   setChatDisplayName(
-    selectedChatProfile.display_name
+    `${selectedChatProfile.first_name} ${selectedChatProfile.last_name}`.trim()
   );
 }, [selectedChatProfile]);
 
@@ -675,7 +676,9 @@ useEffect(() => {
 async function loadProfilePreview() {
   const { data } = await supabase
     .from("profiles")
-    .select("display_name, handle, avatar_url")
+    .select(
+      "first_name, last_name, handle, avatar_url"
+    )
     .eq("id", userParam)
     .maybeSingle();
 
@@ -687,27 +690,31 @@ async function loadProfilePreview() {
   );
 
   if (existing) {
-    return prev.map((chat) =>
-      chat.id === userParam
-        ? {
-            ...chat,
-            display_name:
-              data.display_name || "Unknown User",
-            handle:
-              data.handle || "",
-            avatar_url:
-              data.avatar_url,
-          }
-        : chat
-    );
-  }
+return prev.map(
+(chat) => chat.id === userParam
+? {
+...chat,
+first_name:
+data.first_name || "",
+last_name:
+data.last_name || "",
+handle:
+data.handle || "",
+avatar_url:
+data.avatar_url,
+}
+: chat
+);
+}
 
   return [
     ...prev,
     {
       id: userParam,
-      display_name:
-        data.display_name || "Unknown User",
+      first_name:
+        data.first_name || "",
+      last_name:
+        data.last_name || "",
       handle:
         data.handle || "",
       avatar_url:
@@ -727,14 +734,15 @@ async function loadProfilePreview() {
   }
 
   return [
-  ...prev,
-  {
-    id: userParam,
-    display_name: "Loading...",
-    handle: "",
-    avatar_url: null,
-  },
-];
+    ...prev,
+    {
+      id: userParam,
+      first_name: "Loading...",
+      last_name: "",
+      handle: "",
+      avatar_url: null,
+    },
+  ];
 });
 loadProfilePreview();
 }, [userParam]);
@@ -1018,7 +1026,8 @@ if (!user) {
                 }}
               >
                 {
-                  profile.display_name
+                  `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim() ||
+                    "Unknown User"
                 }
               </div>
 
@@ -1241,7 +1250,7 @@ if (!user) {
     return true;
 
   return (
-    (chat.display_name || "")
+    (`${chat.first_name} ${chat.last_name}`)
       .toLowerCase()
       .includes(search) ||
 
@@ -1369,7 +1378,7 @@ setUnreadChats(
     {chatName.avatar_url ? (
       <img
         src={chatName.avatar_url}
-        alt={chatName.display_name}
+        alt={`${chatName.first_name} ${chatName.last_name}`.trim()}
         style={{
           width: "100%",
           height: "100%",
@@ -1388,7 +1397,7 @@ setUnreadChats(
           color: "#fff",
         }}
       >
-        {chatName.display_name.charAt(0).toUpperCase()}
+        {`${chatName.first_name} ${chatName.last_name}`.trim().charAt(0).toUpperCase()}
       </div>
     )}
   </button>
@@ -1415,7 +1424,7 @@ setUnreadChats(
       padding: 0,
     }}
   >
-    {chatName.display_name}
+    {`${chatName.first_name} ${chatName.last_name}`.trim() || "Unknown User"}
   </button>
 </div>
 
@@ -1613,14 +1622,12 @@ transform:
             e.stopPropagation();
 
             const confirmed =
-  confirm(
-`Block ${
-  chatName.display_name.startsWith("🏠") ||
-  chatName.display_name.startsWith("👥")
-    ? chatName.display_name
-    : `@${chatName.display_name}`
-}?`
-);
+              confirm(
+                `Block ${
+                  `${chatName.first_name} ${chatName.last_name}`.trim() ||
+                  `@${chatName.handle}`
+                }?`
+              );
 
             if (
               !confirmed
@@ -1650,13 +1657,11 @@ transform:
 }
 
             alert(
-`${
-  chatName.display_name.startsWith("🏠") ||
-  chatName.display_name.startsWith("👥")
-    ? chatName.display_name
-    : `@${chatName.display_name}`
-} blocked`
-);
+              `${
+                `${chatName.first_name} ${chatName.last_name}`.trim() ||
+                `@${chatName.handle}`
+              } blocked`
+            );
           }}
           style={{
             width:
@@ -1686,13 +1691,11 @@ transform:
             e.stopPropagation();
 
             alert(
-  `🚩 Reported ${
-    chatName.display_name.startsWith("🏠") ||
-    chatName.display_name.startsWith("👥")
-      ? chatName
-      : `@${chatName.display_name}`
-  }`
-);
+              `🚩 Reported ${
+                `${chatName.first_name} ${chatName.last_name}`.trim() ||
+                `@${chatName.handle}`
+              }`
+            );
 
             setOpenMenu(
               null
@@ -1945,7 +1948,7 @@ transform:
     {selectedChatProfile?.avatar_url ? (
       <img
         src={selectedChatProfile.avatar_url}
-        alt={selectedChatProfile.display_name}
+        alt={`${selectedChatProfile.first_name} ${selectedChatProfile.last_name}`.trim()}
         style={{
           width: "100%",
           height: "100%",

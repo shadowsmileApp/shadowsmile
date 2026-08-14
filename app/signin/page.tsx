@@ -258,7 +258,7 @@ const { error } =
 
 {signupSuccess === "success" && (
   <div className="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
-    ✓ Account created successfully! Please check your email for the confirmation link. After confirming your email, return here and sign in.
+    ✓ Account created successfully! Please check your email for the confirmation link. After confirming your email, you'll be signed in.
   </div>
 )}
 

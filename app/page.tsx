@@ -47,6 +47,15 @@ type Post = {
     handle?: string | null;
     is_private?: boolean | null;
   } | null;
+
+post_media?: {
+  id: string;
+  post_id: string;
+  media_url: string;
+  media_type: "image" | "video";
+  media_order: number;
+  created_at: string;
+}[];
 };
 
 type Comment = {
@@ -392,6 +401,11 @@ if (!user) {
   likePost={likePost}
   addComment={addComment}
   sharePost={sharePost}
+    onPostDeleted={(postId) => {
+      setPosts((currentPosts) =>
+        currentPosts.filter((post) => post.id !== postId)
+      );
+    }}
 />
         ))}
       </section>

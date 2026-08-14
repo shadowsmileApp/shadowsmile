@@ -2,15 +2,20 @@
 
 import React, { useState } from "react";
 import { MoreVertical } from "lucide-react";
+import { deletePost } from "../lib/posts";
 
 type PostMenuProps = {
+  postId: string;
   ownedByUser: boolean;
   isProfilePage?: boolean;
+  onPostDeleted?: (postId: string) => void;
 };
 
 export default function PostMenu({
+  postId,
   ownedByUser,
   isProfilePage = false,
+  onPostDeleted,
 }: PostMenuProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -83,9 +88,29 @@ export default function PostMenu({
                 ✏️ Edit Post
               </button>
 
-              <button style={menuButtonStyle}>
-                🗑️ Delete Post
-              </button>
+              <button
+  style={menuButtonStyle}
+  onClick={async () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this post?"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+  await deletePost(postId);
+  onPostDeleted?.(postId);
+  setMenuOpen(false);
+} catch (error) {
+      console.error(error);
+      alert("Failed to delete post.");
+    }
+  }}
+>
+  🗑️ Delete Post
+</button>
             </>
           ) : (
             <>

@@ -2,14 +2,22 @@ import { supabase } from "./supabase-browser";
 
 export async function getPosts(userId?: string) {
   let query = supabase
-    .from("posts")
-    .select(`
-      *,
-      profiles(handle, is_private)
+.from("posts")
+.select(`
+  *,
+      profiles(handle, is_private),
+      post_media(
+        id,
+        post_id,
+        media_url,
+        media_type,
+        media_order,
+        created_at
+      )
     `)
-    .order("created_at", {
-      ascending: false,
-    });
+.order("created_at", {
+ascending: false,
+});
 
   if (userId) {
     query = query.eq("user_id", userId);
@@ -165,4 +173,15 @@ export async function loadComments(
       avatar_url: null,
     },
   }));
+}
+
+export async function deletePost(postId: string) {
+  const { error } = await supabase
+    .from("posts")
+    .delete()
+    .eq("id", postId);
+
+  if (error) {
+    throw error;
+  }
 }

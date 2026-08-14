@@ -8,7 +8,6 @@ export async function loadFollowers(profileId: string) {
       profiles:follower_id (
         id,
         handle,
-        display_name,
         avatar_url
       )
     `)
@@ -30,7 +29,6 @@ export async function loadFollowing(profileId: string) {
       profiles:following_id (
         id,
         handle,
-        display_name,
         avatar_url
       )
     `)

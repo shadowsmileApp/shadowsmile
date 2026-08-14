@@ -23,6 +23,7 @@ type Post = {
 
   media_url?: string | null;
   media_type?: string | null;
+  post_media?: any[];
 
   post_type: string;
   created_at: string;
@@ -44,8 +45,10 @@ export default function PostPage() {
   const [likeCount, setLikeCount] = useState(0);
   const [commentText, setCommentText] = useState("");
 
+  const [mediaIndex, setMediaIndex] = useState(0);
+
   const [user, setUser] = useState<any>(null);
-const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   /* ================= LOAD USER ================= */
 
@@ -101,14 +104,28 @@ useEffect(() => {
     if (!id) return;
 
     async function loadPost() {
-      const { data } = await supabase
-        .from("posts")
-        .select("*")
-        .eq("id", id)
-        .single();
+  const { data } = await supabase
+    .from("posts")
+    .select("*")
+    .eq("id", id)
+    .single();
 
-      setPost(data);
-    }
+  if (!data) {
+    setPost(null);
+    return;
+  }
+
+  const { data: media } = await supabase
+    .from("post_media")
+    .select("*")
+    .eq("post_id", id)
+    .order("media_order", { ascending: true });
+
+  setPost({
+    ...data,
+    post_media: media || [],
+  });
+}
 
     loadPost();
   }, [id]);
@@ -269,34 +286,210 @@ if (!user) {
   <p>{post.content}</p>
 )}
 
-{post.media_url && post.media_type === "image" && (
-  <img
-    src={post.media_url}
-    alt="Post"
+{post.post_media?.length > 0 ? (
+  <div
     style={{
+      position: "relative",
       width: "100%",
-      borderRadius: 16,
       marginTop: 16,
-      marginBottom: 16,
-      maxHeight: "none",
-      objectFit: "contain",
+      overflow: "hidden",
+      borderRadius: 16,
+      background: "#000",
     }}
-  />
-)}
+  >
+    <div
+      style={{
+        display: "flex",
+        width: "100%",
+        transform: `translateX(-${mediaIndex * 100}%)`,
+        transition: "transform 180ms ease",
+      }}
+    >
+      {post.post_media
+        .slice()
+        .sort(
+          (a: any, b: any) =>
+            a.media_order - b.media_order
+        )
+        .map((media: any) => (
+          <div
+            key={media.id}
+            style={{
+              flex: "0 0 100%",
+              width: "100%",
+              display: "flex",
+              justifyContent: "center",
+              background: "#000",
+            }}
+          >
+            {media.media_type === "video" ? (
+              <video
+                src={media.media_url}
+                controls
+                playsInline
+                preload="metadata"
+                style={{
+                  display: "block",
+                  width: "100%",
+                  maxHeight: 600,
+                  objectFit: "contain",
+                  background: "#000",
+                }}
+              />
+            ) : (
+              <img
+                src={media.media_url}
+                alt="Post media"
+                style={{
+                  display: "block",
+                  width: "100%",
+                  maxHeight: 600,
+                  objectFit: "contain",
+                  background: "#000",
+                }}
+              />
+            )}
+          </div>
+        ))}
+    </div>
 
-{post.media_url && post.media_type === "video" && (
-  <video
-    src={post.media_url}
-    controls
-    style={{
-      width: "100%",
-      borderRadius: 16,
-      marginTop: 16,
-      marginBottom: 16,
-      maxHeight: "none",
-      objectFit: "contain",
-    }}
-  />
+    {post.post_media.length > 1 && (
+      <>
+        <button
+          type="button"
+          onClick={() => {
+            setMediaIndex((current) =>
+              current === 0
+                ? post.post_media.length - 1
+                : current - 1
+            );
+          }}
+          style={{
+            position: "absolute",
+            left: 10,
+            top: "50%",
+            transform: "translateY(-50%)",
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            border: "none",
+            background: "rgba(0,0,0,0.65)",
+            color: "#fff",
+            fontSize: 24,
+            cursor: "pointer",
+            zIndex: 2,
+          }}
+        >
+          ‹
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setMediaIndex((current) =>
+              current === post.post_media.length - 1
+                ? 0
+                : current + 1
+            );
+          }}
+          style={{
+            position: "absolute",
+            right: 10,
+            top: "50%",
+            transform: "translateY(-50%)",
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            border: "none",
+            background: "rgba(0,0,0,0.65)",
+            color: "#fff",
+            fontSize: 24,
+            cursor: "pointer",
+            zIndex: 2,
+          }}
+        >
+          ›
+        </button>
+
+        <div
+          style={{
+            position: "absolute",
+            bottom: 10,
+            left: "50%",
+            transform: "translateX(-50%)",
+            display: "flex",
+            gap: 6,
+            zIndex: 2,
+          }}
+        >
+          {post.post_media.map(
+            (media: any, index: number) => (
+              <button
+                key={media.id}
+                type="button"
+                onClick={() => {
+                  setMediaIndex(index);
+                }}
+                style={{
+                  width: 7,
+                  height: 7,
+                  padding: 0,
+                  borderRadius: "50%",
+                  border: "none",
+                  background:
+                    index === mediaIndex
+                      ? "#fff"
+                      : "rgba(255,255,255,0.45)",
+                  cursor: "pointer",
+                }}
+              />
+            )
+          )}
+        </div>
+      </>
+    )}
+  </div>
+) : (
+  post.media_url &&
+  post.media_type && (
+    <div
+      style={{
+        width: "100%",
+        marginTop: 16,
+        overflow: "hidden",
+        borderRadius: 16,
+        background: "#000",
+      }}
+    >
+      {post.media_type === "video" ? (
+        <video
+          src={post.media_url}
+          controls
+          playsInline
+          preload="metadata"
+          style={{
+            display: "block",
+            width: "100%",
+            maxHeight: 600,
+            objectFit: "contain",
+            background: "#000",
+          }}
+        />
+      ) : (
+        <img
+          src={post.media_url}
+          alt="Post media"
+          style={{
+            display: "block",
+            width: "100%",
+            maxHeight: 600,
+            objectFit: "contain",
+            background: "#000",
+          }}
+        />
+      )}
+    </div>
+  )
 )}
 
         {/* ACTIONS */}
@@ -349,19 +542,22 @@ if (!user) {
 /* ================= STYLES ================= */
 
 const styles: Record<string, React.CSSProperties> = {
-  page: {
-    minHeight: "100vh",
-    background: "#0A0A0F",
-    color: "#fff",
-    padding: 20,
-    fontFamily: "system-ui",
-  },
+page: {
+  minHeight: "100vh",
+  background: "#000",
+  color: "#fff",
+  padding: 0,
+  fontFamily: "system-ui",
+},
 
-  card: {
-    background: "#111",
-    padding: 15,
-    borderRadius: 12,
-    border: "1px solid #222",
+    card: {
+    width: "100%",
+    minHeight: "100vh",
+    background: "#000",
+    padding: 24,
+    borderRadius: 0,
+    border: "none",
+    boxSizing: "border-box",
   },
 
   actions: {

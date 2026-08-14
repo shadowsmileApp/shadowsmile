@@ -90,10 +90,10 @@ useEffect(() => {
       await supabase
         .from("profiles")
         .select(
-          "id, handle, display_name"
+          "id, handle, first_name, last_name"
         )
         .or(
-          `handle.ilike.%${searchTerm}%,display_name.ilike.%${searchTerm}%`
+          `handle.ilike.%${searchTerm}%,first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%`
         )
         .limit(20);
 
@@ -211,7 +211,7 @@ return (
           fontWeight: 700,
         }}
       >
-        {profile.display_name}
+        {`${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim() || "BlackMaltra Member"}
       </div>
 
       <div

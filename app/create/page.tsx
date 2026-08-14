@@ -25,6 +25,12 @@ export default function CreatePage() {
   const [imagePreview, setImagePreview] =
     useState("");
 
+  const [mediaFiles, setMediaFiles] =
+    useState<File[]>([]);
+
+  const [mediaPreviews, setMediaPreviews] =
+    useState<string[]>([]);
+
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -368,29 +374,43 @@ if (
 
 let imageUrl: string | null = null;
 
-if (image) {
-  const safeName = image.name.replace(
+const uploadedMedia: {
+  url: string;
+  type: "image" | "video";
+}[] = [];
+
+const filesToUpload =
+  mediaFiles.length > 0
+    ? mediaFiles
+    : image
+    ? [image]
+    : [];
+
+for (let index = 0; index < filesToUpload.length; index++) {
+  const file = filesToUpload[index];
+
+  const safeName = file.name.replace(
     /[^a-zA-Z0-9._-]/g,
     "_"
   );
 
   const fileName =
-    `${user.id}/${Date.now()}-${safeName}`;
+    `${user.id}/${Date.now()}-${index}-${safeName}`;
 
   const { error: uploadError } =
     await supabase.storage
       .from("posts")
       .upload(
         fileName,
-        image,
+        file,
         {
-          contentType: image.type,
+          contentType: file.type,
         }
       );
 
   if (uploadError) {
     console.error(uploadError);
-    alert("Image upload failed");
+    alert("Media upload failed");
     setPosting(false);
     return;
   }
@@ -400,7 +420,19 @@ if (image) {
       .from("posts")
       .getPublicUrl(fileName);
 
-  imageUrl = data.publicUrl;
+  const mediaType =
+    file.type.startsWith("video")
+      ? "video"
+      : "image";
+
+  uploadedMedia.push({
+    url: data.publicUrl,
+    type: mediaType,
+  });
+}
+
+if (uploadedMedia.length > 0) {
+  imageUrl = uploadedMedia[0].url;
 }
 
 const payload =
@@ -434,13 +466,37 @@ const payload =
         is_anonymous: isAnonymous,
       };
 
-    const { error } = await supabase.from("posts").insert(payload);
+    const { data: createdPost, error } = await supabase
+  .from("posts")
+  .insert(payload)
+  .select("id")
+  .single();
 
 if (error) {
   setPosting(false);
   console.error(error);
   alert("Failed to create post");
   return;
+}
+
+if (uploadedMedia.length > 0 && createdPost) {
+  const mediaRows = uploadedMedia.map((media, index) => ({
+    post_id: createdPost.id,
+    media_url: media.url,
+    media_type: media.type,
+    media_order: index,
+  }));
+
+  const { error: mediaError } = await supabase
+    .from("post_media")
+    .insert(mediaRows);
+
+  if (mediaError) {
+    console.error(mediaError);
+    alert("Post created, but media could not be saved.");
+    setPosting(false);
+    return;
+  }
 }
 
 setPosting(false);
@@ -642,30 +698,53 @@ if (loadingUser) {
   ref={galleryInputRef}
   type="file"
   accept="image/*,video/*"
+  multiple
   hidden
   onChange={(e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-    setImage(file);
-    setImagePreview(URL.createObjectURL(file));
+    setMediaFiles(files);
+    setMediaPreviews(
+      files.map((file) => URL.createObjectURL(file))
+    );
+
+    setImage(files[0]);
+    setImagePreview(
+      URL.createObjectURL(files[0])
+    );
   }}
 />
 
-  {imagePreview && (
-  image?.type.startsWith("video") ? (
-    <video
-      src={imagePreview}
-      controls
-      style={styles.previewImage}
-    />
-  ) : (
-    <img
-      src={imagePreview}
-      alt="Preview"
-      style={styles.previewImage}
-    />
-  )
+  {mediaPreviews.length > 0 && (
+  <div
+    style={{
+      display: "flex",
+      flexDirection: "column",
+      gap: 12,
+      marginTop: 14,
+    }}
+  >
+    {mediaPreviews.map((preview, index) => {
+      const file = mediaFiles[index];
+
+      return file?.type.startsWith("video") ? (
+        <video
+          key={preview}
+          src={preview}
+          controls
+          style={styles.previewImage}
+        />
+      ) : (
+        <img
+          key={preview}
+          src={preview}
+          alt={`Preview ${index + 1}`}
+          style={styles.previewImage}
+        />
+      );
+    })}
+  </div>
 )}
 </div>
         )}

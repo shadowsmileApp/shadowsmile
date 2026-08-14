@@ -49,13 +49,22 @@ type Post = {
   media_url?: string | null;
 
   media_type?: "image" | "video" | null;
+
+  post_media?: {
+    id: string;
+    post_id: string;
+    media_url: string;
+    media_type: "image" | "video";
+    media_order: number;
+    created_at: string;
+  }[];
+
   created_at: string;
 };
 
 type Profile = {
   id: string;
   handle: string | null;
-  display_name: string | null;
 
   first_name: string | null;
   last_name: string | null;
@@ -223,7 +232,6 @@ useEffect(() => {
         .select(`
   id,
   handle,
-  display_name,
   first_name,
   last_name,
   bio,
@@ -530,7 +538,6 @@ setSocialStats((prev) => ({
 
 const displayName =
   `${profile?.first_name ?? ""} ${profile?.last_name ?? ""}`.trim() ||
-  profile?.display_name?.trim() ||
   "BlackMaltra Member";
 
 const profileBio =
@@ -546,12 +553,16 @@ const profileBio =
   const isOwnProfile = currentUser?.id === profile?.id;
 
   const mediaPosts = posts.filter(
-    (post) => post.media_url
-  );
+  (post) =>
+    post.media_url ||
+    (post.post_media && post.post_media.length > 0)
+);
 
-  const textPosts = posts.filter(
-    (post) => !post.media_url
-  );
+const textPosts = posts.filter(
+  (post) =>
+    !post.media_url &&
+    (!post.post_media || post.post_media.length === 0)
+);
 
   /* ================= LOADING ================= */
 
@@ -1188,9 +1199,20 @@ type="button"
          >
 
            <PostMenu
-             ownedByUser={currentUser?.id === p.user_id}
-             isProfilePage
-           />
+  postId={p.id}
+  ownedByUser={currentUser?.id === p.user_id}
+  isProfilePage
+  onPostDeleted={(postId) => {
+  setPosts((currentPosts) =>
+    currentPosts.filter((post) => post.id !== postId)
+  );
+
+  setStats((currentStats) => ({
+    ...currentStats,
+    postCount: Math.max(0, currentStats.postCount - 1),
+  }));
+}}
+/>
 
           {p.media_type === "video" ? (
             <video
@@ -1267,6 +1289,16 @@ likePost={async (postId) => {
 
           addComment={handleAddComment}
           sharePost={sharePost}
+onPostDeleted={(postId) => {
+  setPosts((currentPosts) =>
+    currentPosts.filter((post) => post.id !== postId)
+  );
+
+  setStats((currentStats) => ({
+    ...currentStats,
+    postCount: Math.max(0, currentStats.postCount - 1),
+  }));
+}}
         />
       ))
     )
